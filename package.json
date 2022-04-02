@@ -1,0 +1,50 @@
+{
+  "name": "@iel/axios-extension",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Extend extra functionality for axios.",
+  "main": "lib/index.js",
+  "types": "",
+  "files": [
+    "lib",
+    "types",
+    "README.md"
+  ],
+  "keywords": [
+    "axios",
+    "axios-extension"
+  ],
+  "author": "leihao",
+  "license": "MIT",
+  "repository": "https://github.com/iel-h/axios-extension.git",
+  "homepage": "https://github.com/iel-h/axios-extension",
+  "bugs": "https://github.com/iel-h/axios-extension/issues",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "scripts": {
+    "build": "esbuild ./src/index.ts --external:localforage --bundle --outfile=./dist/index.js --format=esm --target=es6",
+    "build:dts": "tsc",
+    "fmt": "prettier -w ./src/**/*.ts",
+    "fmt:fix": "npm run fmt && eslint --fix ./src/**/*.ts",
+    "test": "npm run test"
+  },
+  "peerDependencies": {
+    "axios": ">=0.26.1",
+    "localforage": ">=1.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.23",
+    "@typescript-eslint/eslint-plugin": "^5.17.0",
+    "@typescript-eslint/parser": "^5.17.0",
+    "axios": "^0.26.1",
+    "esbuild": "^0.14.29",
+    "eslint": "^8.12.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "localforage": "^1.10.0",
+    "prettier": "^2.6.1",
+    "typescript": "^4.6.3"
+  }
+}
