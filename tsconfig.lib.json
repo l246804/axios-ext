@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "outDir": "./lib",
+    "sourceMap": true,
+    "declaration": true,
+    "declarationDir": "./lib",
+    "emitDeclarationOnly": true,
+    "useDefineForClassFields": true
+  },
+  "include": ["src/**/*.ts"]
+}

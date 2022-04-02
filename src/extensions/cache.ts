@@ -1,7 +1,9 @@
 import { AxiosInstance, AxiosRequestConfig } from 'axios'
-import { isFunction, pick } from '../utils'
 import localforage from 'localforage'
+import { assignSafely, isFunction, pick } from '../utils'
 import { serialize } from '../utils/serializer'
+import { staticResolve, staticReject } from '../utils/promise'
+import BaseExtension from './base'
 
 export type ProxyAxiosMethodNoData = 'delete' | 'get' | 'head' | 'options'
 export type ProxyAxiosMethodWithData = 'post' | 'put' | 'patch'
@@ -25,11 +27,13 @@ export interface CacheEntity<T = any> {
 }
 
 export interface CacheOptions {
-  keyGenerator?: (config: AxiosRequestConfig, args: CacheArgs) => string
-  isExpired?: (cacheEntity: CacheEntity) => boolean
+  storeName?: string
+  configStore?: (store: LocalForage) => void
+  keyGenerator?: (config: AxiosRequestConfig, args: CacheArgs) => CacheEntity['key']
+  isExpired?: (entity: CacheEntity) => boolean
   allowCache?: (response: any) => boolean
   transformData?: (response: any) => any
-  onError?: (error: any, errorType: string, cacheEntity?: CacheEntity) => void
+  onError?: (error: any) => void
 }
 
 export interface CacheArgs extends CacheOptions {
@@ -38,178 +42,203 @@ export interface CacheArgs extends CacheOptions {
   forceUpdate?: boolean
 }
 
-const STORE_NAME = 'AXIOS_EXTENSION_CACHE_STORE'
+class CacheExtension extends BaseExtension {
+  static DB_NAME = 'AXIOS_EXTENSION_CACHE_DB'
+  static STORE_NAME = 'AXIOS_EXTENSION_CACHE_STORE'
+  static STORE_DESCRIPTION = 'Cache store of axios.'
 
-export const cacheStore = localforage.createInstance({
-  name: STORE_NAME,
-  description: 'Cache store of axios.'
-})
+  static PROXY_AXIOS_METHOD_NO_DATA: ProxyAxiosMethodNoData[] = ['delete', 'get', 'head', 'options']
+  static PROXY_AXIOS_METHOD_WITH_DATA: ProxyAxiosMethodWithData[] = ['post', 'put', 'patch']
 
-export function dropCacheStore() {
-  cacheStore.dropInstance({
-    name: STORE_NAME
-  })
-}
+  baseOptions: CacheOptions
+  store?: LocalForage
+  storeOptions!: LocalForageOptions
 
-function pickConfig(config: CachedRequestConfig): CachedRequestConfig {
-  return pick(config, ['method', 'url', 'data', 'params'])
-}
+  constructor(axiosInstance: AxiosInstance, options: CacheOptions = {}) {
+    super(axiosInstance)
+    this.baseOptions = options
 
-function getCacheKeyByConfig(config: CachedRequestConfig) {
-  const { method, url, data = {}, params = {} } = config
-
-  return serialize({ method, url, data, params })
-}
-
-function getNow() {
-  return Date.now()
-}
-
-async function getCacheEntityByKey(key: CacheEntity['key'] = '') {
-  return key ? cacheStore.getItem<CacheEntity>(key) : Promise.resolve(null)
-}
-
-function isExpired(cacheEntity: CacheEntity) {
-  const expireTime = Number.isSafeInteger(cacheEntity.expire) ? cacheEntity.expire : Infinity
-
-  return getNow() - cacheEntity.now >= expireTime!
-}
-
-export async function cleanCache() {
-  return cacheStore.clear()
-}
-
-export async function deleteCache(configOrKey: CacheEntity['key'] | CachedRequestConfig) {
-  const key = typeof configOrKey === 'string' ? configOrKey : getCacheKeyByConfig(configOrKey)
-
-  return cacheStore.removeItem(key)
-}
-
-export async function deleteCacheBy(
-  predicate: (cacheEntity: CacheEntity, key: string, interrupter: () => void) => boolean
-) {
-  let needsDeleteEntires: string[] = []
-
-  let isInterrupted = false
-
-  const interrupter = () => (isInterrupted = true)
-
-  return cacheStore
-    .iterate<CacheEntity, any>((cacheEntity, key) => {
-      const valid = predicate?.(cacheEntity, key, interrupter) ?? false
-
-      valid && needsDeleteEntires.push(cacheEntity.key)
-
-      // interrupt iterate
-      if (isInterrupted) {
-        needsDeleteEntires = [cacheEntity.key]
-
-        return true
-      }
-    })
-    .then(() => Promise.all(needsDeleteEntires.map((key) => deleteCache(key))))
-    .catch((error) => error)
-}
-
-export async function setCache(cacheEntity: CacheEntity) {
-  return cacheStore.setItem(cacheEntity.key, cacheEntity)
-}
-
-async function validateCache(args: CacheArgs) {
-  let cacheEntity: CacheEntity | null = null
-
-  try {
-    cacheEntity = await getCacheEntityByKey(args.key)
-  } catch (error) {
-    args.onError?.(error, 'validate')
+    this.createStore()
+    this.init()
   }
 
-  if (cacheEntity === null) return false
+  destroy() {
+    this.dropStore()
+  }
 
-  const expired = args.isExpired?.(cacheEntity) ?? isExpired?.(cacheEntity) ?? true
+  createStore() {
+    this.storeOptions = {
+      name: CacheExtension.DB_NAME,
+      storeName: this.baseOptions.storeName || CacheExtension.STORE_NAME,
+      description: CacheExtension.STORE_DESCRIPTION
+    }
 
-  if (args.forceUpdate || expired) {
+    this.store = localforage.createInstance(this.storeOptions)
+
+    this.baseOptions.configStore?.(this.store)
+  }
+
+  dropStore() {
+    this.clean()
+    this.store?.dropInstance(this.storeOptions)
+
+    this.store = undefined
+  }
+
+  private async init() {
+    this.axiosInstance.withCache = (args) => {
+      const _args: CacheArgs = assignSafely(args, this.baseOptions)
+      _args.forceUpdate = !!_args.forceUpdate
+
+      if (!isFunction(_args.keyGenerator)) {
+        _args.keyGenerator = undefined
+      }
+      if (!isFunction(_args.isExpired)) {
+        _args.isExpired = undefined
+      }
+
+      const proxyRequestFns: Partial<ProxyRequestFns> = {}
+
+      const proxyRequestFn = async (config: AxiosRequestConfig = {}, rawRequestFn: any) => {
+        _args.key = _args.keyGenerator?.(config, _args) || _args.key || this.getKeyByConfig(config)
+
+        try {
+          if (await this.validate(_args)) {
+            const entity = (await this.get(_args.key))!
+
+            return entity.data
+          }
+        } catch (error) {
+          _args.onError?.(error)
+        }
+
+        return rawRequestFn().then(this.onResponse.bind(this, _args, config)).catch(staticReject)
+      }
+
+      CacheExtension.PROXY_AXIOS_METHOD_NO_DATA.forEach((method) => {
+        proxyRequestFns[method] = async (url, config) => {
+          const _config = { method, url, ...config }
+
+          return proxyRequestFn(_config, () => this.axiosInstance[method](url, config))
+        }
+      })
+
+      CacheExtension.PROXY_AXIOS_METHOD_WITH_DATA.forEach((method) => {
+        proxyRequestFns[method] = async (url, data, config) => {
+          const _config = { method, url, data, ...config }
+
+          return proxyRequestFn(_config, () => this.axiosInstance[method](url, data, config))
+        }
+      })
+
+      return proxyRequestFns as ProxyRequestFns
+    }
+  }
+
+  private onResponse(args: CacheArgs, config: AxiosRequestConfig, response: any) {
+    if (args.allowCache?.(response) ?? true) {
+      const entity = {
+        key: args.key!,
+        now: this.getNow(),
+        expire: args.expire ?? null,
+        data: args.transformData?.(response) ?? response,
+        config: this.pickConfig(config)
+      }
+
+      this.set(entity).catch((error) => args.onError?.(error))
+    }
+
+    return response
+  }
+
+  async get(key: CacheEntity['key'] = '') {
+    return key ? this.store?.getItem<CacheEntity>(key) : staticResolve(null)
+  }
+
+  async set(entity: CacheEntity) {
+    if (!entity?.key) return
+
+    return this.store?.setItem(entity.key, entity)
+  }
+
+  async delete(configOrKey: CacheEntity['key'] | CachedRequestConfig) {
+    const key = typeof configOrKey === 'string' ? configOrKey : this.getKeyByConfig(configOrKey)
+
+    return this.store?.removeItem(key)
+  }
+
+  async deleteBy(predicate: (entity: CacheEntity, key: string, interrupter: () => void) => boolean) {
+    let needsDeleteEntires: string[] = []
+
+    let isInterrupted = false
+
+    const interrupter = () => (isInterrupted = true)
+
+    return this.store
+      ?.iterate<CacheEntity, any>((entity, key) => {
+        const valid = predicate?.(entity, key, interrupter) ?? false
+
+        valid && needsDeleteEntires.push(entity.key)
+
+        // interrupt iterate
+        if (isInterrupted) {
+          needsDeleteEntires = [entity.key]
+
+          return true
+        }
+      })
+      .then(() => Promise.all(needsDeleteEntires.map((key) => this.delete(key))))
+      .catch(staticReject)
+  }
+
+  async clean() {
+    return this.store?.clear()
+  }
+
+  async validate(args: CacheArgs) {
+    let entity: CacheEntity | null = null
+
     try {
-      await deleteCache(args.key!)
+      entity = await this.get(args.key)
     } catch (error) {
-      args.onError?.(error, 'delete', cacheEntity)
+      args.onError?.(error)
+    }
+
+    if (entity === null) return false
+
+    const expired = args.isExpired?.(entity) ?? this.isExpired?.(entity) ?? true
+
+    if (args.forceUpdate || expired) {
+      try {
+        await this.delete(args.key!)
+      } catch (error) {
+        args.onError?.(error)
+      }
       return false
     }
+
+    return true
   }
 
-  return true
-}
+  isExpired(entity: CacheEntity) {
+    const expireTime = Number.isSafeInteger(entity.expire) ? entity.expire : Infinity
 
-export function useCache(axios: AxiosInstance, options: Partial<CacheOptions> = {}) {
-  axios.withCache = function cacheData(args = {}) {
-    args = Object.assign({}, options, args)
-    args.forceUpdate = !!args.forceUpdate
-
-    if (!isFunction(args.keyGenerator)) {
-      args.keyGenerator = undefined
-    }
-    if (!isFunction(args.isExpired)) {
-      args.isExpired = undefined
-    }
-
-    const proxyRequestFns: Partial<ProxyRequestFns> = {}
-
-    const proxyRequestFn = async (config: AxiosRequestConfig = {}, rawRequestFn: any) => {
-      args.key = args.keyGenerator?.(config, args) || args.key || getCacheKeyByConfig(config)
-
-      try {
-        if (await validateCache(args)) {
-          const cacheEntity = (await getCacheEntityByKey(args.key))!
-
-          return cacheEntity.data
-        }
-      } catch (error) {
-        args.onError?.(error, 'get')
-      }
-
-      return rawRequestFn().then(onResponse.bind(null, args, config)).catch(onResponseError)
-    }
-
-    const onResponse = (args: CacheArgs, config: AxiosRequestConfig = {}, response: any) => {
-      if (args.allowCache?.(response) ?? true) {
-        const cacheEntity = {
-          key: args.key!,
-          now: getNow(),
-          expire: args.expire ?? null,
-          data: args.transformData?.(response) ?? response,
-          config: pickConfig(config)
-        }
-
-        setCache(cacheEntity).catch((error) => args!.onError?.(error, 'set', cacheEntity))
-      }
-
-      return response
-    }
-
-    const onResponseError = (error: any) => error
-
-    // method no data
-    ;(['delete', 'get', 'head', 'options'] as ProxyAxiosMethodNoData[]).forEach((method) => {
-      proxyRequestFns[method] = async (url, config) => {
-        const _config = { method, url, ...config }
-
-        return proxyRequestFn(_config, () => axios[method](url, config))
-      }
-    })
-
-    // method with data
-    ;(['post', 'put', 'patch'] as ProxyAxiosMethodWithData[]).forEach((method) => {
-      proxyRequestFns[method] = async (url, data, config) => {
-        const _config = { method, url, data, ...config }
-
-        return proxyRequestFn(_config, () => axios[method](url, data, config))
-      }
-    })
-
-    return proxyRequestFns as ProxyRequestFns
+    return this.getNow() - entity.now >= expireTime!
   }
 
-  return axios
+  getNow() {
+    return Date.now()
+  }
+
+  getKeyByConfig(config: AxiosRequestConfig = {}) {
+    const { method, url, data = {}, params = {} } = config
+
+    return serialize({ method, url: this.getUrlByConfig({ url }), data, params })
+  }
+
+  pickConfig(config: AxiosRequestConfig): CachedRequestConfig {
+    return pick(config, ['method', 'url', 'data', 'params'])
+  }
 }
 
-export const use = useCache
+export default CacheExtension

@@ -1,5 +1,5 @@
-import { AxiosInstance } from 'axios'
+import BaseExtension from "./base";
 
-export function useCancelRepeat(axios: AxiosInstance) {
-  console.log(axios)
-}
+class CancelRepeatExtension extends BaseExtension {}
+
+export default CancelRepeatExtension
