@@ -6,8 +6,6 @@ import {
   isString,
   isNullish,
   bind,
-  omit,
-  serialize,
   Nullish,
   isSafeInteger,
   noop,

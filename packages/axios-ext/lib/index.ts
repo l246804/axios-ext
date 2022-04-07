@@ -66,6 +66,7 @@ class AxiosExt {
   }
 
   private init() {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const axiosExt = this
     const instance = this.instance
 
@@ -75,6 +76,7 @@ class AxiosExt {
 
     const proxyRequest = function (withData = false): any {
       return function () {
+        // eslint-disable-next-line prefer-const, prefer-rest-params
         let [configOrUrl, configOrData, config] = Array.from(arguments)
 
         if (withData) {
@@ -132,6 +134,7 @@ class AxiosExt {
   }
 
   private runHooks(name: keyof AxiosExtPluginHook, ...args: any) {
+    // eslint-disable-next-line prefer-spread
     return Promise.all(this.getHooks(name).map((fn) => fn.apply(null, args)))
   }
 
