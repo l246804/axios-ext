@@ -8,8 +8,10 @@ export function assignSafly(target: object = {}, ...sources: any) {
   return Object.assign({}, target, ...sources)
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 export function bind<T extends Function = any>(fn: T, thisArg?: any): any {
   return function wrap() {
+    // eslint-disable-next-line prefer-rest-params
     return fn.apply(thisArg, arguments as any)
   }
 }
@@ -29,6 +31,7 @@ export function extend(a: Record<string, any>, b: Record<string, any>, thisArg: 
 }
 
 export function invoke(obj: any, method: string, ...args: any) {
+  // eslint-disable-next-line prefer-spread
   return isFunction(obj?.[method]) ? obj[method].apply(obj, args) : undefined
 }
 
@@ -49,7 +52,7 @@ export function forEach(obj: any, iter: (value: any, key: string | number, obj: 
 }
 
 export function filter(obj: any, iter: (value: any, key: string | number, obj: object) => void) {
-  let result: any[] = helperCreateArrayMethods('filter', obj, iter)
+  const result: any[] = helperCreateArrayMethods('filter', obj, iter)
 
   if (isArray(obj)) return result
 
@@ -71,4 +74,5 @@ export const omit = helperCreatePickOmit(false, true)
 
 export const deleteKeys = (obj: any, keys: string[]) => keys.forEach((key) => delete obj?.[key])
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 export const noop = () => {}

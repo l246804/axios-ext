@@ -7,7 +7,7 @@
     "axios-extension",
     "axios-ext"
   ],
-  "author": "leihaohao <leihaohao@neucloud.cn>",
+  "author": "leihaohao <2468048176@qq.com>",
   "homepage": "https://github.com/iel-h/axios-ext",
   "license": "MIT",
   "main": "lib/index.js",

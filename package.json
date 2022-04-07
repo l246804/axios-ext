@@ -2,6 +2,10 @@
   "name": "root",
   "private": true,
   "scripts": {
+    "dev": "pnpm dev -C --filter @iel/axios-ext-example",
+    "fmt": "pnpm fmt:code && pnpm fmt:fix",
+    "fmt:code": "prettier --write ./packages/**/*.ts",
+    "fmt:fix": "eslint --fix ./packages/**/*.ts",
     "clean": "rimraf node_modules **/*/node_modules"
   },
   "devDependencies": {

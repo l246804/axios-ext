@@ -1,5 +1,3 @@
-import { forEach, isArray, isDate, isNullish, isObject, isURLSearchParams } from '.'
-
 /**
  * Determines whether the specified URL is absolute
  */
