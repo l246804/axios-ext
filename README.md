@@ -1,3 +1,3 @@
-# Axios Extension
+# Axios Ext
 
 Extend extra functionality for axios.
