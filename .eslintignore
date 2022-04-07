@@ -1,0 +1,3 @@
+packages/axios-ext-example
+packages/**/__test__
+packages/**/dist
