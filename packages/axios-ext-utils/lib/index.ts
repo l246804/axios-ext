@@ -1,10 +1,11 @@
-import { isFunction, isArray } from './check-type'
+import { isFunction, isArray } from './checkType'
 
 export * from './serializer'
 export * from './url'
-export * from './check-type'
+export * from './checkType'
+export * from './helperEventStore'
 
-export function assignSafly(target: object = {}, ...sources: any) {
+export function assignSafely(target: object = {}, ...sources: any) {
   return Object.assign({}, target, ...sources)
 }
 

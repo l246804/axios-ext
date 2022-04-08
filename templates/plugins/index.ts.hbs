@@ -1,0 +1,36 @@
+import { AxiosExtPlugin } from '@iel/axios-ext'
+import { assignSafely } from '@iel/axios-ext-utils'
+
+export type AxiosExt{{pluginName}}Options = {
+  [K: string]: any
+}
+
+const getValidOptions = (options: AxiosExt{{pluginName}}Options = {}) => {
+  const _options: AxiosExt{{pluginName}}Options = assignSafely(options)
+
+  return _options
+}
+
+const useAxiosExt{{pluginName}}: AxiosExtPlugin<AxiosExt{{pluginName}}Options> = function (axiosExt, options) {
+  const baseOptions = getValidOptions(options)
+  const instance = axiosExt.instance
+
+  console.log(baseOptions, instance)
+
+  return {
+    onRequest: ($eventStore, config, setReturnValue) => {
+      // on request
+    },
+    onResponse: ($eventStore, response) => {
+      // on response
+    },
+    onResponseError: ($eventStore, error) => {
+      // on response error
+    },
+    onResponseFinally: () => {
+      // on response finally
+    }
+  }
+}
+
+export default useAxiosExt{{pluginName}}
