@@ -1,7 +1,12 @@
 {
   "name": "root",
   "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
+    "preplop": "esbuild --bundle ./plopfile.ts --format=esm --outfile=./plopfile.mjs --platform=node",
+    "plop": "plop & rimraf ./plopfile.mjs",
     "dev": "pnpm dev -C --filter @iel/axios-ext-example",
     "fmt": "pnpm fmt:code && pnpm fmt:fix",
     "fmt:code": "prettier --write ./packages/**/*.ts",
@@ -19,6 +24,7 @@
     "eslint-plugin-prettier": "^4.0.0",
     "fs-extra": "^10.0.1",
     "prettier": "^2.6.2",
+    "plop": "^3.0.5",
     "rimraf": "^3.0.2",
     "typescript": "^4.6.3"
   },

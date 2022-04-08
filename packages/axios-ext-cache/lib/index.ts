@@ -1,7 +1,7 @@
-import { AxiosExtPlugin, AxiosExtStatic, ChainShallowAxiosInstance } from '@iel/axios-ext'
+import { AxiosExtPlugin, AxiosExtInstance, ChainShallowAxiosInstance } from '@iel/axios-ext'
 import {
   isFunction,
-  assignSafly,
+  assignSafely,
   isBoolean,
   isString,
   isNullish,
@@ -9,7 +9,8 @@ import {
   Nullish,
   isSafeInteger,
   noop,
-  deleteKeys
+  deleteKeys,
+  helperCreateEventStoreManager
 } from '@iel/axios-ext-utils'
 import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import localforage from 'localforage'
@@ -75,7 +76,7 @@ const useStore = (baseOptions: AxiosExtCacheOptions) => {
   return store
 }
 
-const useStoreManager = (store: LocalForage, axiosExt: AxiosExtStatic) => {
+const useStoreManager = (store: ReturnType<typeof useStore>, axiosExt: AxiosExtInstance) => {
   const get = async (configOrKey: AxiosExtCacheEntity['key'] | AxiosRequestConfig) => {
     const key = isString(configOrKey) ? configOrKey : axiosExt.getKeyByConfig(configOrKey)
 
@@ -97,7 +98,7 @@ const useStoreManager = (store: LocalForage, axiosExt: AxiosExtStatic) => {
   const removeBy = async (
     predicate: (entity: AxiosExtCacheEntity, key: AxiosExtCacheEntity['key'], interrupter: () => void) => boolean
   ) => {
-    let needsDeleteEntires: AxiosExtCacheEntity['key'][] = []
+    let needsDeleteEntities: AxiosExtCacheEntity['key'][] = []
 
     let isInterrupted = false
 
@@ -107,16 +108,16 @@ const useStoreManager = (store: LocalForage, axiosExt: AxiosExtStatic) => {
       .iterate<AxiosExtCacheEntity, any>((entity, key) => {
         const valid = predicate?.(entity, key, interrupter) ?? false
 
-        valid && needsDeleteEntires.push(entity.key)
+        valid && needsDeleteEntities.push(entity.key)
 
         // interrupt iterate
         if (isInterrupted) {
-          needsDeleteEntires = [entity.key]
+          needsDeleteEntities = [entity.key]
 
           return true
         }
       })
-      .then(() => Promise.all(needsDeleteEntires.map((key) => remove(key))))
+      .then(() => Promise.all(needsDeleteEntities.map((key) => remove(key))))
   }
 
   const clear = async () => {
@@ -151,7 +152,7 @@ const defaultTransformData = (response: AxiosResponse) => {
 }
 
 const getValidOptions = (options: AxiosExtCacheOptions = {}) => {
-  const _options: AxiosExtCacheOptions = assignSafly(options)
+  const _options: AxiosExtCacheOptions = assignSafely(options)
   if (!isFunction(_options.allowCache)) _options.allowCache = undefined
   if (!isFunction(_options.configStore)) _options.configStore = undefined
   if (!isFunction(_options.isExpired)) _options.isExpired = defaultIsExpired
@@ -163,7 +164,7 @@ const getValidOptions = (options: AxiosExtCacheOptions = {}) => {
 }
 
 const getValidArgs = (args: AxiosExtCacheArgs = {}) => {
-  const _args: Required<AxiosExtCacheArgs> = assignSafly(defaultArgs(), args)
+  const _args: Required<AxiosExtCacheArgs> = assignSafely(defaultArgs(), args)
   if (!isBoolean(_args.forceUpdate)) _args.forceUpdate = !!_args.forceUpdate
   if (!isString(_args.key) && !isNullish(_args.key)) _args.key = String(_args.key)
 
@@ -174,15 +175,13 @@ const useAxiosExtCache: AxiosExtPlugin<AxiosExtCacheOptions> = function (axiosEx
   const baseOptions = getValidOptions(options)
   const store = useStore(baseOptions)
   const storeManager = useStoreManager(store, axiosExt)
+  const evtStoreManager = helperCreateEventStoreManager<Required<AxiosExtCacheArgs>>('Cache')
   const instance = axiosExt.instance
-
-  let validArgs: Required<AxiosExtCacheArgs>
 
   const withCache: AxiosInstance['withCache'] = function (args) {
     const shallowInstance = axiosExt.createShallowAxiosInstance(this)
+    evtStoreManager.set(shallowInstance.$eventStore, getValidArgs(args))
     deleteKeys(shallowInstance, ['withCache', 'Cache'])
-
-    validArgs = getValidArgs(args)
 
     return shallowInstance as any
   }
@@ -196,7 +195,7 @@ const useAxiosExtCache: AxiosExtPlugin<AxiosExtCacheOptions> = function (axiosEx
     }
     if (!entity) return false
 
-    const expired = baseOptions.isExpired!(entity, validArgs)
+    const expired = baseOptions.isExpired!(entity, args)
     if (args.forceUpdate || expired) {
       try {
         await storeManager.remove(args.key)
@@ -213,14 +212,18 @@ const useAxiosExtCache: AxiosExtPlugin<AxiosExtCacheOptions> = function (axiosEx
   instance.withCache = bind(withCache, instance)
 
   return {
-    onRequest: async (config, setReturnValue) => {
-      if (!validArgs.key) {
-        validArgs.key = baseOptions.keyGenerator?.(config, validArgs) ?? axiosExt.getKeyByConfig(config)
-        validArgs.key = String(validArgs.key)
+    onRequest: async ($eventStore, config, setReturnValue) => {
+      const eventStore = evtStoreManager.get($eventStore)
+
+      if (isNullish(eventStore)) return
+
+      if (!eventStore.key) {
+        eventStore.key = baseOptions.keyGenerator?.(config, eventStore) ?? axiosExt.getKeyByConfig(config)
+        eventStore.key = String(eventStore.key)
       }
 
       try {
-        const entity = await validateCache(validArgs)
+        const entity = await validateCache(eventStore)
         if (entity !== false) {
           return setReturnValue(Promise.resolve(entity.data))
         }
@@ -228,13 +231,17 @@ const useAxiosExtCache: AxiosExtPlugin<AxiosExtCacheOptions> = function (axiosEx
         baseOptions.onError!(error)
       }
     },
-    onResponse: (response) => {
-      if (baseOptions.allowCache?.(response, validArgs) ?? true) {
+    onResponse: ($eventStore, response) => {
+      const eventStore = evtStoreManager.get($eventStore)
+
+      if (isNullish(eventStore)) return
+
+      if (baseOptions.allowCache?.(response, eventStore) ?? true) {
         const entity: AxiosExtCacheEntity = {
-          key: validArgs.key,
+          key: eventStore.key,
           now: getNow(),
-          expire: validArgs.expire,
-          data: baseOptions.transformData!(response, validArgs)
+          expire: eventStore.expire,
+          data: baseOptions.transformData!(response, eventStore)
         }
         storeManager.set(entity).catch(baseOptions.onError)
       }

@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import {
   buildFullPath,
-  assignSafly,
+  assignSafely,
   bind,
   extend,
   pick,
@@ -11,22 +11,30 @@ import {
   isString
 } from '@iel/axios-ext-utils'
 
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    [K: string]: any
+  }
+}
+
 export type ProxyAxiosMethodNoData = 'delete' | 'get' | 'head' | 'options'
 export type ProxyAxiosMethodWithData = 'post' | 'put' | 'patch'
 export type ProxyAxiosMethod = ProxyAxiosMethodNoData | ProxyAxiosMethodWithData
 
-export type ShallowAxiosInstance = AxiosInstance
+export type ShallowAxiosInstance = AxiosInstance & { $eventStore: Record<string, any> }
 export type ChainShallowAxiosInstance = Partial<ShallowAxiosInstance>
-export type AxiosExtStatic = AxiosExt
+export type AxiosExtInstance = AxiosExt
 
 export type AxiosExtPluginHook = {
   onRequest?: (
+    $eventStore: ShallowAxiosInstance['$eventStore'],
     config: AxiosRequestConfig,
     setReturnValue: (value: any) => void,
     resolve: (value: any) => void,
     reject: (error: any) => void
   ) => void
   onResponse?: (
+    $eventStore: ShallowAxiosInstance['$eventStore'],
     response: AxiosResponse,
     config: AxiosRequestConfig,
     setReturnValue: (value: any) => void,
@@ -34,11 +42,17 @@ export type AxiosExtPluginHook = {
     reject: (error: any) => void
   ) => void
   onResponseError?: (
+    $eventStore: ShallowAxiosInstance['$eventStore'],
     error: any,
     config: AxiosRequestConfig,
     setReturnValue: (value: any) => void,
     resolve: (value: any) => void,
     reject: (error: any) => void
+  ) => void
+  onResponseFinally?: (
+    $eventStore: ShallowAxiosInstance['$eventStore'],
+    returnValue: any,
+    config: AxiosRequestConfig
   ) => void
   onDestroy?: () => void
 }
@@ -75,46 +89,59 @@ class AxiosExt {
     const methodWithData: ProxyAxiosMethodWithData[] = ['post', 'put', 'patch']
 
     const proxyRequest = function (withData = false): any {
-      return function () {
+      return function (this: ShallowAxiosInstance) {
+        const $eventStore = this.$eventStore
         // eslint-disable-next-line prefer-const, prefer-rest-params
         let [configOrUrl, configOrData, config] = Array.from(arguments)
 
         if (withData) {
-          config = assignSafly(config, { url: configOrUrl, data: configOrData })
+          config = assignSafely(config, { url: configOrUrl, data: configOrData })
         } else {
           if (isString(configOrUrl ?? '')) {
-            config = assignSafly(config, { url: configOrUrl })
+            config = assignSafely(config, { url: configOrUrl })
           } else {
-            config = assignSafly(config, configOrUrl)
+            config = assignSafely(config, configOrUrl)
           }
         }
 
         return new Promise(async (resolve, reject) => {
+          const wrapResolve: any = (value: any) => {
+            if (wrapResolve.resolved) return
+            wrapResolve.resolved = true
+
+            setReturnValue(value)
+            resolve(value)
+          }
+
           let returnValue: any = null
           const setReturnValue = (value: any) => {
             returnValue = value
           }
 
+          const getHookParams = (...params: any) =>
+            ([] as any[]).concat($eventStore, params, config, setReturnValue, wrapResolve, reject)
+
           try {
             const onRequests = axiosExt.getHooks('onRequest')
             for (const onRequest of onRequests) {
-              await onRequest(config, setReturnValue, resolve, reject)
+              await onRequest(...getHookParams())
 
               // 如果设置 returnValue 为 Promise ，则提前返回数据并终止后续操作
               if (isPromise(returnValue)) {
-                return resolve(returnValue)
+                return wrapResolve(returnValue)
               }
             }
 
             const response = await axiosExt.rawRequestFn(config)
-            setReturnValue(response)
 
-            await axiosExt.runHooks('onResponse', response, setReturnValue, resolve, reject)
+            setReturnValue(response)
+            await axiosExt.runHooks('onResponse', ...getHookParams(response))
           } catch (error) {
             setReturnValue(Promise.reject(error))
-            await axiosExt.runHooks('onResponseError', error, setReturnValue, resolve, reject)
+            await axiosExt.runHooks('onResponseError', ...getHookParams(error))
           } finally {
-            resolve(returnValue)
+            wrapResolve(returnValue)
+            await axiosExt.runHooks('onResponseFinally', $eventStore, returnValue, config)
           }
         })
       }
@@ -141,6 +168,7 @@ class AxiosExt {
   createShallowAxiosInstance(thisArg: ChainShallowAxiosInstance = this.instance) {
     let shallowAxiosInstance: any = thisArg
     shallowAxiosInstance = bind(shallowAxiosInstance.request!, shallowAxiosInstance)
+    shallowAxiosInstance.$eventStore = {}
 
     extend(shallowAxiosInstance, thisArg, shallowAxiosInstance)
 

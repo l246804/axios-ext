@@ -6,21 +6,22 @@
     "axios",
     "axios-extension",
     "axios-ext",
-    "axios-ext-utils"
+    "axios-ext-utils",
+    "utils"
   ],
   "author": "leihaohao <2468048176@qq.com>",
   "homepage": "https://github.com/iel-h/axios-ext",
   "license": "MIT",
-  "main": "lib/index.js",
-  "directories": {
-    "lib": "lib",
-    "test": "__tests__"
-  },
+  "main": "lib/index.ts",
   "files": [
-    "lib"
+    "dist",
+    "README.md"
   ],
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "registry": "https://registry.npmjs.org"
   },
   "repository": {
     "type": "git",

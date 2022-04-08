@@ -1,11 +1,13 @@
 {
-  "name": "@iel/axios-ext",
-  "version": "0.0.0",
-  "description": "Extend extra functionality for axios.",
+  "name": "@iel/axios-ext-{{name}}",
+  "version": "{{version}}",
+  "description": "{{description}}",
   "keywords": [
     "axios",
     "axios-extension",
-    "axios-ext"
+    "axios-ext",
+    "axios-ext-{{name}}",
+    "{{name}}"
   ],
   "author": "leihaohao <2468048176@qq.com>",
   "homepage": "https://github.com/iel-h/axios-ext",
@@ -30,6 +32,12 @@
   },
   "bugs": {
     "url": "https://github.com/iel-h/axios-ext/issues"
+  },
+  "peerDependencies": {
+    "@iel/axios-ext": "latest"
+  },
+  "devDependencies": {
+    "@iel/axios-ext": "workspace:^0.0.0"
   },
   "dependencies": {
     "@iel/axios-ext-utils": "workspace:^0.0.0"
