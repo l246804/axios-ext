@@ -4,17 +4,19 @@ const PREFIX = '$$EVENT_STORE__'
 let id = 0
 
 export function helperCreateEventStoreManager<T = any>(name = '') {
-  if (!name) {
-    id += 1
-    name = PREFIX + id
+  id += 1
+
+  let key = PREFIX + id
+  if (name) {
+    key += `__${name}`
   }
 
   const get = (eventStore: any) => {
-    return eventStore?.[name] as T | Nullish
+    return eventStore?.[key] as T | Nullish
   }
 
   const set = (eventStore: any = {}, data: T) => {
-    eventStore[name] = data
+    eventStore[key] = data
     return data
   }
 
