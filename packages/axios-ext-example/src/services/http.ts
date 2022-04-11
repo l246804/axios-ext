@@ -1,8 +1,14 @@
 import useAxiosExt from '@iel/axios-ext'
 import AxiosExtCache from '@iel/axios-ext-cache'
 import AxiosExtCancelRepeat from '@iel/axios-ext-cancel-repeat'
+import AxiosExtResponseWrapper from '@iel/axios-ext-response-wrapper'
 import { isPromise } from '@iel/axios-ext-utils'
 import axios from 'axios'
+
+type AxiosResponseTuple<T = any> = [boolean, T, string]
+declare module 'axios' {
+  interface AxiosResponse<T = any> extends AxiosResponseTuple<T> {}
+}
 
 export const http = axios.create({
   baseURL: '/api',
@@ -22,6 +28,7 @@ function initExts() {
       globalNotAllowRepeat: true,
       onRepeat: () => [true, 'Manual cancel.', 'manual']
     })
+    .use(AxiosExtResponseWrapper, {})
     .use(() => ({
       onResponseFinally: async (e, value) =>
         console.log(

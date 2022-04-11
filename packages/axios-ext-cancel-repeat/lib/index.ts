@@ -1,4 +1,4 @@
-import { AxiosExtPlugin, AxiosExtInstance, ChainShallowAxiosInstance, ShallowAxiosInstance } from '@iel/axios-ext'
+import { AxiosExtPlugin, AxiosExtInstance, ChainShallowAxiosInstance } from '@iel/axios-ext'
 import {
   assignSafely,
   bind,

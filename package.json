@@ -7,7 +7,7 @@
   "scripts": {
     "preplop": "esbuild --bundle ./plopfile.ts --format=esm --outfile=./plopfile.mjs --platform=node",
     "plop": "plop & rimraf ./plopfile.mjs",
-    "dev": "pnpm dev -C --filter @iel/axios-ext-example",
+    "dev": "pnpm -C ./packages/axios-ext-example dev",
     "fmt": "pnpm fmt:code && pnpm fmt:fix",
     "fmt:code": "prettier --write ./packages/**/*.ts",
     "fmt:fix": "eslint --fix ./packages/**/*.ts",
