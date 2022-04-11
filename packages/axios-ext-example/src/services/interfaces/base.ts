@@ -8,8 +8,5 @@ export const notAllowRepeat = () => {
   return http.notAllowRepeat().get('/project/component-tree').then(console.log)
 }
 
-export const allowRepeat = async () => {
-  const res = await http.allowRepeat().get<{ id: string; name: string }>('/project/component-tree')
-  const [error, data, cancelType] = res
-  console.log(error, data, cancelType)
-}
+export const allowRepeat = async () =>
+  http.withLog({ enableOnRequest: false }).allowRepeat().get('/project/component-tree')

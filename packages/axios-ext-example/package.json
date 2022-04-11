@@ -11,6 +11,7 @@
     "@iel/axios-ext": "workspace:^0.0.0",
     "@iel/axios-ext-cache": "workspace:^0.0.0",
     "@iel/axios-ext-cancel-repeat": "workspace:^0.0.0",
+    "@iel/axios-ext-log": "workspace:^0.0.0",
     "@iel/axios-ext-response-wrapper": "workspace:^0.0.0",
     "@iel/axios-ext-utils": "workspace:^0.0.0",
     "vue": "^3.2.25"
