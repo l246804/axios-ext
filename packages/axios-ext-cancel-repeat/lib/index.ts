@@ -1,7 +1,6 @@
 import { AxiosExtPlugin, AxiosExtInstance, ChainShallowAxiosInstance } from '@iel/axios-ext'
 import {
   assignSafely,
-  bind,
   deleteKeys,
   helperCreateEventStoreManager,
   isBoolean,
@@ -160,8 +159,9 @@ const useAxiosExtCancelRepeat: AxiosExtPlugin<AxiosExtCancelRepeatOptions> = fun
     storeManager.remove(args.key)
   }
 
-  instance.notAllowRepeat = bind(notAllowRepeat, instance)
-  instance.allowRepeat = bind(allowRepeat, instance)
+  instance.CancelRepeat = storeManager
+  instance.notAllowRepeat = notAllowRepeat
+  instance.allowRepeat = allowRepeat
 
   return {
     onRequest: ($eventStore, config, setReturnValue) => {

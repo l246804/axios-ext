@@ -28,8 +28,7 @@ export default function (plop: NodePlopAPI) {
         type: 'input',
         name: 'name',
         message: 'Plugin name',
-        validate: notEmpty('name'),
-        transformer: (value = '') => value.trim()
+        validate: notEmpty('name')
       },
       {
         type: 'input',
@@ -41,40 +40,38 @@ export default function (plop: NodePlopAPI) {
         name: 'version',
         message: 'Plugin version',
         default: '0.0.0',
-        validate: notEmpty('version'),
-        transformer: (value = '') => value.trim()
+        validate: notEmpty('version')
       }
     ],
     actions: (data) => {
-      // eslint-disable-next-line prefer-const
-      let { name = '', description = '', version = '0.0.0' } = data ?? {}
-      name = plop.getHelper('kebabCase')(name)
+      const { name = '', description = '', version = '0.0.0' } = data ?? {}
 
+      const pkgName = plop.getHelper('kebabCase')(name).trim().toLowerCase()
       const dirName = PLUGIN_PREFIX + name
       const pluginName = plop.getHelper('pascalCase')(name)
 
       const actionData = {
-        name,
+        pkgName,
         pluginName,
         description: description.trim(),
-        version
+        version: version.trim()
       }
 
       const pkgPath = resolvePackages(dirName, 'package.json')
       const readMePath = resolvePackages(dirName, 'README.md')
       const indexPath = resolvePackages(dirName, 'lib', 'index.ts')
 
-      const createAction = (path = '', templateFile = '', data: any = {}) => ({
+      const createAction = (path = '', templateFile = '') => ({
         type: 'add',
         path,
         templateFile,
-        data
+        data: actionData
       })
 
       return [
-        createAction(pkgPath, resolveTemplates('plugins/package.json.hbs'), actionData),
-        createAction(readMePath, resolveTemplates('plugins/README.md.hbs'), actionData),
-        createAction(indexPath, resolveTemplates('plugins/index.ts.hbs'), actionData)
+        createAction(pkgPath, resolveTemplates('plugins/package.json.hbs')),
+        createAction(readMePath, resolveTemplates('plugins/README.md.hbs')),
+        createAction(indexPath, resolveTemplates('plugins/index.ts.hbs'))
       ]
     }
   })

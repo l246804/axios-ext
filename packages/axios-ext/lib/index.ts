@@ -8,7 +8,8 @@ import {
   serialize,
   isFunction,
   isPromise,
-  isString
+  isString,
+  isPlainObject
 } from '@iel/axios-ext-utils'
 
 declare module 'axios' {
@@ -174,9 +175,12 @@ class AxiosExt {
   createShallowAxiosInstance(thisArg: ChainShallowAxiosInstance = this.instance, needsEventStore = true) {
     let shallowAxiosInstance: any = thisArg
     shallowAxiosInstance = bind(shallowAxiosInstance.request!, shallowAxiosInstance)
-    needsEventStore && (shallowAxiosInstance.$eventStore = {})
 
     extend(shallowAxiosInstance, thisArg, shallowAxiosInstance)
+
+    if (needsEventStore && !isPlainObject(shallowAxiosInstance.$eventStore)) {
+      shallowAxiosInstance.$eventStore = {}
+    }
 
     return shallowAxiosInstance as ShallowAxiosInstance
   }

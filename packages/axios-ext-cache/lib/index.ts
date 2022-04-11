@@ -5,7 +5,6 @@ import {
   isBoolean,
   isString,
   isNullish,
-  bind,
   Nullish,
   isSafeInteger,
   noop,
@@ -209,7 +208,7 @@ const useAxiosExtCache: AxiosExtPlugin<AxiosExtCacheOptions> = function (axiosEx
   }
 
   instance.Cache = storeManager
-  instance.withCache = bind(withCache, instance)
+  instance.withCache = withCache
 
   return {
     onRequest: async ($eventStore, config, setReturnValue) => {

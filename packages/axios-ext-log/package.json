@@ -1,13 +1,13 @@
 {
-  "name": "@iel/axios-ext-{{pkgName}}",
-  "version": "{{version}}",
-  "description": "{{description}}",
+  "name": "@iel/axios-ext-log",
+  "version": "0.0.0",
+  "description": "Log plugin for AxiosExt.",
   "keywords": [
     "axios",
     "axios-extension",
     "axios-ext",
-    "axios-ext-{{pkgName}}",
-    "{{pkgName}}"
+    "axios-ext-log",
+    "log"
   ],
   "author": "leihaohao <2468048176@qq.com>",
   "homepage": "https://github.com/iel-h/axios-ext",

@@ -7,6 +7,7 @@
   "scripts": {
     "preplop": "esbuild --bundle ./plopfile.ts --format=esm --outfile=./plopfile.mjs --platform=node",
     "plop": "plop & rimraf ./plopfile.mjs",
+    "postplop": "pnpm i",
     "dev": "pnpm -C ./packages/axios-ext-example dev",
     "fmt": "pnpm fmt:code && pnpm fmt:fix",
     "fmt:code": "prettier --write ./packages/**/*.ts",
@@ -19,12 +20,12 @@
     "@typescript-eslint/eslint-plugin": "^5.18.0",
     "@typescript-eslint/parser": "^5.18.0",
     "esbuild": "^0.14.32",
-    "eslint": "^8.12.0",
+    "eslint": "7.32",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
     "fs-extra": "^10.0.1",
-    "prettier": "^2.6.2",
     "plop": "^3.0.5",
+    "prettier": "^2.6.2",
     "rimraf": "^3.0.2",
     "typescript": "^4.6.3"
   },
