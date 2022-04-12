@@ -1,6 +1,7 @@
 import useAxiosExt from '@iel/axios-ext'
 import AxiosExtCache from '@iel/axios-ext-cache'
 import AxiosExtCancelRepeat from '@iel/axios-ext-cancel-repeat'
+import AxiosExtRetry from '@iel/axios-ext-retry'
 import AxiosExtResponseWrap from '@iel/axios-ext-response-wrap'
 import AxiosResponseTupleWrapper, { AxiosResponseTuple } from '@iel/axios-ext-response-wrap/lib/wrappers/tuple'
 import { ErrorAdaptor, SuccessAdaptor } from '@iel/axios-ext-response-wrap/lib/adaptors'
@@ -18,17 +19,12 @@ export const http = axios.create({
 })
 
 function initExts() {
+  const tupleWrapper = AxiosResponseTupleWrapper([ErrorAdaptor, SuccessAdaptor])
+
   useAxiosExt(http)
     .use(AxiosExtCache, {
-      onError: console.error,
-      transformData: (response) => {
-        console.log('transformData=========', response)
-        return (<any>response.data).data
-      },
-      allowCache: (response) => {
-        console.log('allowCache==============', response)
-        return (<any>response.data).success
-      }
+      transformData: (response, config) => tupleWrapper.transformResponseData(response, config),
+      allowCache: (response) => response.data.success
     })
     .use(AxiosExtCancelRepeat, {
       globalNotAllowRepeat: true,
@@ -36,8 +32,9 @@ function initExts() {
     })
     .use(AxiosExtResponseWrap, {
       globalWithResponseWrap: true,
-      wrapper: AxiosResponseTupleWrapper([ErrorAdaptor, SuccessAdaptor])
+      wrapper: tupleWrapper
     })
+    .use(AxiosExtRetry, { max: 5 })
     .use(AxiosExtLog, { globalOnResponse: true })
 }
 

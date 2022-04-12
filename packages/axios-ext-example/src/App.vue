@@ -18,12 +18,15 @@ const allowRepeat = () => {
 }
 const responseWrap = async () => {
   const [error, data] = await Base.responseWrap<{ a: boolean; b: string }>()
-
+  console.log(error, data)
   if (error) {
     return alert(data)
   }
 
   console.log('response wrap data: ', data)
+}
+const retry = () => {
+  Base.retry()
 }
 </script>
 
@@ -36,6 +39,7 @@ const responseWrap = async () => {
   <button @click="notAllowRepeat">notAllowRepeat</button>
   <button @click="allowRepeat">allowRepeat</button>
   <button @click="responseWrap">responseWrap</button>
+  <button @click="retry">retry</button>
 </template>
 
 <style>

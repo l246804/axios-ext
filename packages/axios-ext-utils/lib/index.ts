@@ -64,8 +64,10 @@ export function filter(obj: any, iter: (value: any, key: string | number, obj: o
 }
 
 function helperCreatePickOmit(case1: boolean, case2: boolean) {
-  return function pickOrOmit(obj: any, keys: string[]) {
-    return filter(obj, (value, key) => (keys.includes(key as string) ? case1 : case2))
+  return function pickOrOmit(obj: any, keys: string[] | ((value: any, key: string | number) => boolean)) {
+    const predicate = isFunction(keys) ? keys : (value: any, key: string | number) => keys.includes(key as string)
+
+    return filter(obj, (value, key) => (predicate(value, key) ? case1 : case2))
   }
 }
 
@@ -77,3 +79,9 @@ export const deleteKeys = (obj: any, keys: string[]) => keys.forEach((key) => de
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export const noop = () => {}
+
+export async function sleep(ms = 0) {
+  return new Promise<boolean>((resolve) => {
+    setTimeout(() => resolve(true), ms)
+  })
+}

@@ -86,17 +86,18 @@ const useAxiosExtLog: AxiosExtPlugin<AxiosExtLogOptions> = function (axiosExt, o
   instance.withLog = withLog
 
   return {
-    onRequest: ($eventStore, config) => {
+    onRequest: ({ $eventStore, config }) => {
       const eventStore = evtStoreManager.get($eventStore) ?? getValidArgs({}, baseOptions)
+
       if (!eventStore.enableOnRequest) return
 
       log('request', { $eventStore, config })
     },
-    onResponseFinally: async ($eventStore, returnValue, config) => {
+    onResponseFinally: async ({ $eventStore, isError, returnValue, config }) => {
       const eventStore = evtStoreManager.get($eventStore) ?? getValidArgs({}, baseOptions)
+
       if (!eventStore.enableOnResponse) return
 
-      let isError = false
       if (isPromise(returnValue)) {
         returnValue = await returnValue.catch((error) => {
           isError = true
