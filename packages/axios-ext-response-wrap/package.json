@@ -1,13 +1,13 @@
 {
-  "name": "@iel/axios-ext-response-wrapper",
+  "name": "@iel/axios-ext-response-wrap",
   "version": "0.0.0",
   "description": "Axios response result wrapper.",
   "keywords": [
     "axios",
     "axios-extension",
     "axios-ext",
-    "axios-ext-response-wrapper",
-    "response-wrapper"
+    "axios-ext-response-wrap",
+    "response-wrap"
   ],
   "author": "leihaohao <2468048176@qq.com>",
   "homepage": "https://github.com/iel-h/axios-ext",

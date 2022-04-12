@@ -1,10 +1,13 @@
-import { AxiosExtPlugin, ChainShallowAxiosInstance } from '@iel/axios-ext'
+import { AxiosExtPlugin, ChainShallowAxiosInstance, OmitChainShallowAxiosInstance } from '@iel/axios-ext'
 import { assignSafely, deleteKeys, helperCreateEventStoreManager, isBoolean, isPromise } from '@iel/axios-ext-utils'
 import { AxiosInstance } from 'axios'
 
 declare module 'axios' {
   interface AxiosInstance {
-    withLog: <T extends ChainShallowAxiosInstance = any>(this: T, args?: AxiosExtLogArgs) => Omit<T, 'withLog'>
+    withLog: <T = ChainShallowAxiosInstance>(
+      this: T,
+      args?: AxiosExtLogArgs
+    ) => OmitChainShallowAxiosInstance<T, 'withLog'>
   }
 }
 

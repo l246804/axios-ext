@@ -11,7 +11,7 @@ export function assignSafely(target: object = {}, ...sources: any) {
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export function bind<T extends Function = any>(fn: T, thisArg?: any): any {
-  return function wrap() {
+  return function wrapFn() {
     // eslint-disable-next-line prefer-rest-params
     return fn.apply(thisArg, arguments as any)
   }
@@ -20,7 +20,7 @@ export function bind<T extends Function = any>(fn: T, thisArg?: any): any {
 /**
  * Extends object a by mutably adding to it the properties of object b.
  */
-export function extend(a: Record<string, any>, b: Record<string, any>, thisArg: any) {
+export function extend(a: Record<string, any>, b: Record<string, any>, thisArg?: any) {
   forEach(b, function (value, key) {
     if (thisArg && isFunction(value)) {
       a[key] = bind(value, thisArg)

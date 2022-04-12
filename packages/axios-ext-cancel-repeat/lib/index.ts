@@ -1,4 +1,9 @@
-import { AxiosExtPlugin, AxiosExtInstance, ChainShallowAxiosInstance } from '@iel/axios-ext'
+import {
+  AxiosExtPlugin,
+  AxiosExtInstance,
+  ChainShallowAxiosInstance,
+  OmitChainShallowAxiosInstance
+} from '@iel/axios-ext'
 import {
   assignSafely,
   deleteKeys,
@@ -15,13 +20,13 @@ import { AxiosInstance, AxiosRequestConfig } from 'axios'
 declare module 'axios' {
   interface AxiosInstance {
     CancelRepeat: ReturnType<typeof useStoreManager>
-    notAllowRepeat: <T extends ChainShallowAxiosInstance = any>(
+    notAllowRepeat: <T = ChainShallowAxiosInstance>(
       this: T,
       args?: AxiosExtCancelRepeatArgs
-    ) => Omit<T, 'notAllowRepeat' | 'allowRepeat' | 'CancelRepeat'>
-    allowRepeat: <T extends ChainShallowAxiosInstance = any>(
+    ) => OmitChainShallowAxiosInstance<T, 'notAllowRepeat' | 'allowRepeat' | 'CancelRepeat'>
+    allowRepeat: <T = ChainShallowAxiosInstance>(
       this: T
-    ) => Omit<T, 'allowRepeat' | 'notAllowRepeat' | 'CancelRepeat'>
+    ) => OmitChainShallowAxiosInstance<T, 'allowRepeat' | 'notAllowRepeat' | 'CancelRepeat'>
   }
 }
 
