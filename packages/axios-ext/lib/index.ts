@@ -36,7 +36,7 @@ export type OmitChainShallowAxiosInstance<T, K> = Omit<T, K extends keyof T ? K 
 export type AxiosExtInstance = AxiosExt
 
 export type AxiosExtPluginHook = {
-  onRequest?: (args: {
+  onRequest?: (params: {
     $eventStore: ShallowAxiosInstance['$eventStore']
     config: AxiosRequestConfig
     returnValue: any
@@ -46,7 +46,7 @@ export type AxiosExtPluginHook = {
     resolve: (value: any) => void
     reject: (error: any) => void
   }) => void
-  onResponse?: (args: {
+  onResponse?: (params: {
     $eventStore: ShallowAxiosInstance['$eventStore']
     response: AxiosResponse
     config: AxiosRequestConfig
@@ -55,7 +55,7 @@ export type AxiosExtPluginHook = {
     resolve: (value: any) => void
     reject: (error: any) => void
   }) => void
-  onResponseError?: (args: {
+  onResponseError?: (params: {
     $eventStore: ShallowAxiosInstance['$eventStore']
     error: AxiosError
     config: AxiosRequestConfig
@@ -64,7 +64,7 @@ export type AxiosExtPluginHook = {
     resolve: (value: any) => void
     reject: (error: any) => void
   }) => void
-  onResponseFinally?: (args: {
+  onResponseFinally?: (params: {
     isError: boolean
     $eventStore: ShallowAxiosInstance['$eventStore']
     returnValue: any
