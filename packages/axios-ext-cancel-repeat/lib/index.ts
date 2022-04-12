@@ -156,7 +156,7 @@ const useAxiosExtCancelRepeat: AxiosExtPlugin<AxiosExtCancelRepeatOptions> = fun
     return storeManager.get(args.key) !== null
   }
 
-  const cleanOnResponseFinally = ($eventStore: any) => {
+  const cleanOnResponseFinally = ({ $eventStore }: any) => {
     const args = evtStoreManager.get($eventStore)?.args
 
     if (isNullish(args)) return
@@ -169,7 +169,7 @@ const useAxiosExtCancelRepeat: AxiosExtPlugin<AxiosExtCancelRepeatOptions> = fun
   instance.allowRepeat = allowRepeat
 
   return {
-    onRequest: ($eventStore, config, setReturnValue) => {
+    onRequest: ({ $eventStore, config, setReturnValue }) => {
       let eventStore = evtStoreManager.get($eventStore)
 
       if (isNullish(eventStore)) {

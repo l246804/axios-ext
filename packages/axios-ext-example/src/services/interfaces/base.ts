@@ -19,3 +19,5 @@ export const notAllowRepeat = () => {
 export const allowRepeat = async () => http.allowRepeat().get('/project/component-tree')
 
 export const responseWrap = async <T = any>() => http.allowRepeat().get<T>('/project/component-tree')
+
+export const retry = async () => http.withRetry({ delay: 3e3, max: 2 }).get('/project/component-tree')

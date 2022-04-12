@@ -13,7 +13,7 @@ export type AxiosResponseTuple<T = any, D = any> = [
 export default function tupleWrapper(adaptors: AxiosResponseAdaptor | AxiosResponseAdaptor[]) {
   const _adaptors = isArray(adaptors) ? adaptors : [adaptors]
 
-  const wrapper: AxiosResponseWrapper = {
+  const wrapper: Required<AxiosResponseWrapper> = {
     transformResponseData: (response) => {
       const responseData = getResponseDataByAdaptors(response.data, _adaptors)
 

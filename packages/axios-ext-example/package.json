@@ -13,6 +13,7 @@
     "@iel/axios-ext-cancel-repeat": "workspace:^0.0.0",
     "@iel/axios-ext-log": "workspace:^0.0.0",
     "@iel/axios-ext-response-wrap": "workspace:^0.0.0",
+    "@iel/axios-ext-retry": "workspace:^0.0.0",
     "@iel/axios-ext-utils": "workspace:^0.0.0",
     "vue": "^3.2.25"
   },

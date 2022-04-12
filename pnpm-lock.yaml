@@ -68,6 +68,7 @@ importers:
       '@iel/axios-ext-cancel-repeat': workspace:^0.0.0
       '@iel/axios-ext-log': workspace:^0.0.0
       '@iel/axios-ext-response-wrap': workspace:^0.0.0
+      '@iel/axios-ext-retry': workspace:^0.0.0
       '@iel/axios-ext-utils': workspace:^0.0.0
       '@vitejs/plugin-vue': ^2.3.0
       typescript: ^4.5.4
@@ -80,6 +81,7 @@ importers:
       '@iel/axios-ext-cancel-repeat': link:../axios-ext-cancel-repeat
       '@iel/axios-ext-log': link:../axios-ext-log
       '@iel/axios-ext-response-wrap': link:../axios-ext-response-wrap
+      '@iel/axios-ext-retry': link:../axios-ext-retry
       '@iel/axios-ext-utils': link:../axios-ext-utils
       vue: 3.2.31
     devDependencies:

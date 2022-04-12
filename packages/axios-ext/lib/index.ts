@@ -8,8 +8,7 @@ import {
   isFunction,
   isPromise,
   isString,
-  isPlainObject,
-  bind
+  isPlainObject
 } from '@iel/axios-ext-utils'
 
 declare module 'axios' {
@@ -37,34 +36,40 @@ export type OmitChainShallowAxiosInstance<T, K> = Omit<T, K extends keyof T ? K 
 export type AxiosExtInstance = AxiosExt
 
 export type AxiosExtPluginHook = {
-  onRequest?: <D = any>(
-    $eventStore: ShallowAxiosInstance['$eventStore'],
-    config: AxiosRequestConfig<D>,
-    setReturnValue: (value: any) => void,
-    resolve: (value: any) => void,
+  onRequest?: (args: {
+    $eventStore: ShallowAxiosInstance['$eventStore']
+    config: AxiosRequestConfig
+    returnValue: any
+    setReturnValue: (value: any) => void
+    requestFn: AxiosInstance['request']
+    setRequestFn: (fn: any) => void
+    resolve: (value: any) => void
     reject: (error: any) => void
-  ) => void
-  onResponse?: <T = any, D = any>(
-    $eventStore: ShallowAxiosInstance['$eventStore'],
-    response: AxiosResponse<T, D>,
-    config: AxiosRequestConfig<D>,
-    setReturnValue: (value: any) => void,
-    resolve: (value: any) => void,
+  }) => void
+  onResponse?: (args: {
+    $eventStore: ShallowAxiosInstance['$eventStore']
+    response: AxiosResponse
+    config: AxiosRequestConfig
+    returnValue: any
+    setReturnValue: (value: any) => void
+    resolve: (value: any) => void
     reject: (error: any) => void
-  ) => void
-  onResponseError?: <T = any, D = any>(
-    $eventStore: ShallowAxiosInstance['$eventStore'],
-    error: AxiosError<T, D>,
-    config: AxiosRequestConfig<D>,
-    setReturnValue: (value: any) => void,
-    resolve: (value: any) => void,
+  }) => void
+  onResponseError?: (args: {
+    $eventStore: ShallowAxiosInstance['$eventStore']
+    error: AxiosError
+    config: AxiosRequestConfig
+    returnValue: any
+    setReturnValue: (value: any) => void
+    resolve: (value: any) => void
     reject: (error: any) => void
-  ) => void
-  onResponseFinally?: <D = any>(
-    $eventStore: ShallowAxiosInstance['$eventStore'],
-    returnValue: any,
-    config: AxiosRequestConfig<D>
-  ) => void
+  }) => void
+  onResponseFinally?: (args: {
+    isError: boolean
+    $eventStore: ShallowAxiosInstance['$eventStore']
+    returnValue: any
+    config: AxiosRequestConfig
+  }) => void
   onDestroy?: () => void
 }
 export type AxiosExtPlugin<T = any> = (axiosExt: AxiosExt, options?: T) => AxiosExtPluginHook
@@ -139,13 +144,29 @@ class AxiosExt {
           returnValue = value
         }
 
-        const getHookParams = (...params: any) =>
-          ([] as any[]).concat($eventStore, params, config, setReturnValue, wrapResolve, reject)
+        let requestFn = axiosExt.rawRequestFn
+        const setRequestFn = (fn: any) => {
+          if (!isFunction(fn)) return
+
+          requestFn = fn
+        }
+
+        const getHookParams = (params: any = {}) => ({
+          $eventStore,
+          config,
+          resolve: wrapResolve,
+          reject,
+          setReturnValue,
+          returnValue,
+          ...params
+        })
+
+        let isError = false
 
         try {
           const onRequests = axiosExt.getHooks('onRequest')
           for (const onRequest of onRequests) {
-            await onRequest(...getHookParams())
+            await onRequest(getHookParams({ setRequestFn, requestFn }))
 
             // 如果设置 returnValue 为 Promise ，则提前返回数据并终止后续操作
             if (isPromise(returnValue)) {
@@ -153,16 +174,17 @@ class AxiosExt {
             }
           }
 
-          const response = await axiosExt.rawRequestFn(config)
+          const response = await requestFn(config)
 
           setReturnValue(response)
-          await axiosExt.runHooks('onResponse', ...getHookParams(response))
+          await axiosExt.runHooks('onResponse', getHookParams({ response }))
         } catch (error) {
+          isError = true
           setReturnValue(Promise.reject(error))
-          await axiosExt.runHooks('onResponseError', ...getHookParams(error))
+          await axiosExt.runHooks('onResponseError', getHookParams({ error }))
         } finally {
           wrapResolve(returnValue)
-          await axiosExt.runHooks('onResponseFinally', $eventStore, returnValue, config)
+          await axiosExt.runHooks('onResponseFinally', { $eventStore, isError, returnValue, config })
         }
       })
     }
@@ -180,8 +202,7 @@ class AxiosExt {
   }
 
   createShallowAxiosInstance(thisArg: ChainShallowAxiosInstance = this.instance, needsEventStore = true) {
-    let shallowAxiosInstance: any = thisArg
-    shallowAxiosInstance = bind(shallowAxiosInstance.request, shallowAxiosInstance)
+    const shallowAxiosInstance: any = this.rawRequestFn
 
     extend(shallowAxiosInstance, thisArg, shallowAxiosInstance)
 

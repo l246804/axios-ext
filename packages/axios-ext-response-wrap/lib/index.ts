@@ -5,7 +5,9 @@ import {
   helperCreateEventStoreManager,
   isBoolean,
   isFunction,
-  isPlainObject
+  isPromise,
+  isPlainObject,
+  noop
 } from '@iel/axios-ext-utils'
 import { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 
@@ -19,8 +21,8 @@ declare module 'axios' {
 }
 
 export type AxiosResponseWrapper = {
-  transformResponseData?: <T = any, D = any>(response: AxiosResponse<T, D>, config: AxiosRequestConfig<D>) => any
-  transformResponseError?: <T = any, D = any>(error: AxiosError<T, D>, config: AxiosRequestConfig<D>) => any
+  transformResponseData?: (response: AxiosResponse, config: AxiosRequestConfig) => any
+  transformResponseError?: (error: AxiosError, config: AxiosRequestConfig) => any
 }
 
 export type AxiosExtResponseWrapOptions = {
@@ -80,17 +82,19 @@ const useAxiosExtResponseWrap: AxiosExtPlugin<AxiosExtResponseWrapOptions> = fun
   instance.withResponseWrap = withResponseWrap
 
   return {
-    onResponse: ($eventStore, response, config, setReturnValue, resolve) => {
+    onResponse: ({ $eventStore, response, config, resolve }) => {
       const eventStore = evtStoreManager.get($eventStore) ?? getValidArgs({}, baseOptions)
 
       if (eventStore.skipGlobalResponseWrap || !isFunction(baseOptions.transformResponseData)) return
 
       resolve(baseOptions.transformResponseData(response, config))
     },
-    onResponseError: ($eventStore, error, config, setReturnValue, resolve) => {
+    onResponseError: ({ $eventStore, error, config, returnValue, resolve }) => {
       const eventStore = evtStoreManager.get($eventStore) ?? getValidArgs({}, baseOptions)
 
       if (eventStore.skipGlobalErrorWrap || !isFunction(baseOptions.transformResponseError)) return
+
+      if (isPromise(returnValue)) returnValue.catch(noop)
 
       resolve(baseOptions.transformResponseError(error, config))
     }

@@ -18,13 +18,13 @@ const useAxiosExt{{pluginName}}: AxiosExtPlugin<AxiosExt{{pluginName}}Options> =
   console.log(baseOptions, instance)
 
   return {
-    onRequest: ($eventStore, config, setReturnValue) => {
+    onRequest: ({ $eventStore, config, setReturnValue }) => {
       // on request
     },
-    onResponse: ($eventStore, response) => {
+    onResponse: ({ $eventStore, response }) => {
       // on response
     },
-    onResponseError: ($eventStore, error) => {
+    onResponseError: ({ $eventStore, error }) => {
       // on response error
     },
     onResponseFinally: () => {

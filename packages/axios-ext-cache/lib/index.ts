@@ -14,7 +14,9 @@ import {
   isSafeInteger,
   noop,
   deleteKeys,
-  helperCreateEventStoreManager
+  helperCreateEventStoreManager,
+  omit,
+  isObject
 } from '@iel/axios-ext-utils'
 import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import localforage from 'localforage'
@@ -33,17 +35,9 @@ export type AxiosExtCacheOptions = {
   storeName?: string | number
   configStore?: (store: LocalForage) => void
   keyGenerator?: (config: AxiosRequestConfig, args: AxiosExtCacheArgs) => AxiosExtCacheEntity['key']
-  isExpired?: <D = any>(entity: AxiosExtCacheEntity, config: AxiosRequestConfig<D>, args: AxiosExtCacheArgs) => boolean
-  allowCache?: <T = any, D = any>(
-    response: AxiosResponse<T, D>,
-    config: AxiosRequestConfig<D>,
-    args: AxiosExtCacheArgs
-  ) => boolean
-  transformData?: <T = any, D = any>(
-    response: AxiosResponse<T, D>,
-    config: AxiosRequestConfig<D>,
-    args: AxiosExtCacheArgs
-  ) => any
+  isExpired?: (entity: AxiosExtCacheEntity, config: AxiosRequestConfig, args: AxiosExtCacheArgs) => boolean
+  allowCache?: (response: AxiosResponse, config: AxiosRequestConfig, args: AxiosExtCacheArgs) => boolean
+  transformData?: (response: AxiosResponse, config: AxiosRequestConfig, args: AxiosExtCacheArgs) => any
   onError?: (error: any) => void
   [K: string]: any
 }
@@ -55,11 +49,15 @@ export type AxiosExtCacheArgs = {
   [K: string]: any
 }
 
-export type AxiosExtCacheEntity<T = any> = {
+export type AxiosExtCacheEntity = {
   key: string
   now: number
   expire: number | null
-  data: T
+  data: {
+    response: AxiosResponse
+    config: AxiosRequestConfig
+    args: Required<AxiosExtCacheArgs>
+  }
 }
 
 const defaultStoreOptions = (): LocalForageOptions => ({
@@ -224,7 +222,7 @@ const useAxiosExtCache: AxiosExtPlugin<AxiosExtCacheOptions> = function (axiosEx
   instance.withCache = withCache
 
   return {
-    onRequest: async ($eventStore, config, setReturnValue) => {
+    onRequest: async ({ $eventStore, config, setReturnValue }) => {
       const eventStore = evtStoreManager.get($eventStore)
 
       if (isNullish(eventStore)) return
@@ -237,23 +235,31 @@ const useAxiosExtCache: AxiosExtPlugin<AxiosExtCacheOptions> = function (axiosEx
       try {
         const entity = await validateCache(eventStore, config)
         if (entity !== false) {
-          return setReturnValue(Promise.resolve(entity.data))
+          const { response, config, args } = entity.data
+
+          return setReturnValue(Promise.resolve(baseOptions.transformData!(response, config, args)))
         }
       } catch (error) {
         baseOptions.onError!(error)
       }
     },
-    onResponse: ($eventStore, response, config) => {
+    onResponse: ({ $eventStore, response, config }) => {
       const eventStore = evtStoreManager.get($eventStore)
 
       if (isNullish(eventStore)) return
 
       if (baseOptions.allowCache?.(response, config, eventStore) ?? true) {
+        const _response = {
+          ...response,
+          request: null,
+          // 仅能存储非函数属性
+          config: omit(response.config, (val) => isObject(val) || isFunction(val))
+        }
         const entity: AxiosExtCacheEntity = {
           key: eventStore.key,
           now: getNow(),
           expire: eventStore.expire,
-          data: baseOptions.transformData!(response, config, eventStore)
+          data: { response: _response, config, args: eventStore }
         }
         storeManager.set(entity).catch(baseOptions.onError)
       }
