@@ -47,8 +47,8 @@ export default function (plop: NodePlopAPI) {
       const { name = '', description = '', version = '0.0.0' } = data ?? {}
 
       const pkgName = plop.getHelper('kebabCase')(name).trim().toLowerCase()
-      const dirName = PLUGIN_PREFIX + name
-      const pluginName = plop.getHelper('pascalCase')(name)
+      const dirName = PLUGIN_PREFIX + pkgName
+      const pluginName = plop.getHelper('pascalCase')(pkgName)
 
       const actionData = {
         pkgName,

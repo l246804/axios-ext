@@ -2,21 +2,17 @@ import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } f
 import {
   buildFullPath,
   assignSafely,
-  bind,
   extend,
   pick,
   serialize,
   isFunction,
   isPromise,
   isString,
-  isPlainObject
+  isPlainObject,
+  bind
 } from '@iel/axios-ext-utils'
 
 declare module 'axios' {
-  interface AxiosInstance {
-    $axiosExt?: AxiosExtInstance
-  }
-
   interface AxiosRequestConfig {
     [K: string]: any
   }
@@ -26,8 +22,18 @@ export type ProxyAxiosMethodNoData = 'delete' | 'get' | 'head' | 'options'
 export type ProxyAxiosMethodWithData = 'post' | 'put' | 'patch'
 export type ProxyAxiosMethod = ProxyAxiosMethodNoData | ProxyAxiosMethodWithData
 
-export type ShallowAxiosInstance = AxiosInstance & { $eventStore: Record<string, any> }
+type AxiosRequestFnType = {
+  (...args: Parameters<AxiosInstance>): ReturnType<AxiosInstance>
+  (...args: Parameters<AxiosInstance['request']>): ReturnType<AxiosInstance>
+}
+export type ShallowAxiosInstance = AxiosInstance &
+  AxiosRequestFnType & {
+    $eventStore: Record<string, any>
+    _isShallowInstance: boolean
+  }
 export type ChainShallowAxiosInstance = Partial<ShallowAxiosInstance>
+export type OmitChainShallowAxiosInstance<T, K> = Omit<T, K extends keyof T ? K : never> & AxiosRequestFnType
+
 export type AxiosExtInstance = AxiosExt
 
 export type AxiosExtPluginHook = {
@@ -87,6 +93,8 @@ class AxiosExt {
   private init() {
     const instance = this.instance
 
+    if ((<any>instance)._isShallowInstance) return
+
     // 劫持 axios methods 方法
     const methodNoData: ProxyAxiosMethodNoData[] = ['delete', 'get', 'head', 'options']
     const methodWithData: ProxyAxiosMethodWithData[] = ['post', 'put', 'patch']
@@ -95,8 +103,7 @@ class AxiosExt {
     methodWithData.forEach((method) => (instance[method] = this.proxyRequest(true)))
 
     // 更改 request 请求
-    instance.request = this.proxyRequest(false) as any
-    instance.$axiosExt = this
+    instance.request = this.proxyRequest(false)
   }
 
   private proxyRequest(withData = false): any {
@@ -174,7 +181,7 @@ class AxiosExt {
 
   createShallowAxiosInstance(thisArg: ChainShallowAxiosInstance = this.instance, needsEventStore = true) {
     let shallowAxiosInstance: any = thisArg
-    shallowAxiosInstance = bind(shallowAxiosInstance.request!, shallowAxiosInstance)
+    shallowAxiosInstance = bind(shallowAxiosInstance.request, shallowAxiosInstance)
 
     extend(shallowAxiosInstance, thisArg, shallowAxiosInstance)
 
@@ -182,6 +189,7 @@ class AxiosExt {
       shallowAxiosInstance.$eventStore = {}
     }
 
+    shallowAxiosInstance._isShallowInstance = true
     return shallowAxiosInstance as ShallowAxiosInstance
   }
 
@@ -216,14 +224,6 @@ class AxiosExt {
   }
 }
 
-export function createAxios(config?: AxiosRequestConfig) {
-  const context = axios.create(config)
-  const axiosExt = useAxiosExt(context)
-  const instance = axiosExt.createShallowAxiosInstance(context, false)
-
-  return instance as Required<AxiosInstance>
-}
-
-export default function useAxiosExt(instance: AxiosInstance) {
+export default function useAxiosExt(instance: any): AxiosExtInstance {
   return new AxiosExt(instance)
 }

@@ -1,4 +1,9 @@
-import { AxiosExtPlugin, AxiosExtInstance, ChainShallowAxiosInstance } from '@iel/axios-ext'
+import {
+  AxiosExtPlugin,
+  AxiosExtInstance,
+  ChainShallowAxiosInstance,
+  OmitChainShallowAxiosInstance
+} from '@iel/axios-ext'
 import {
   isFunction,
   assignSafely,
@@ -17,10 +22,10 @@ import localforage from 'localforage'
 declare module 'axios' {
   interface AxiosInstance {
     Cache: ReturnType<typeof useStoreManager>
-    withCache: <T extends ChainShallowAxiosInstance = any>(
+    withCache: <T = ChainShallowAxiosInstance>(
       this: T,
       args?: AxiosExtCacheArgs
-    ) => Omit<T, 'withCache' | 'Cache'>
+    ) => OmitChainShallowAxiosInstance<T, 'withCache' | 'Cache'>
   }
 }
 
@@ -28,9 +33,17 @@ export type AxiosExtCacheOptions = {
   storeName?: string | number
   configStore?: (store: LocalForage) => void
   keyGenerator?: (config: AxiosRequestConfig, args: AxiosExtCacheArgs) => AxiosExtCacheEntity['key']
-  isExpired?: (entity: AxiosExtCacheEntity, args: AxiosExtCacheArgs) => boolean
-  allowCache?: (response: AxiosResponse, args: AxiosExtCacheArgs) => boolean
-  transformData?: (response: AxiosResponse, args: AxiosExtCacheArgs) => any
+  isExpired?: <D = any>(entity: AxiosExtCacheEntity, config: AxiosRequestConfig<D>, args: AxiosExtCacheArgs) => boolean
+  allowCache?: <T = any, D = any>(
+    response: AxiosResponse<T, D>,
+    config: AxiosRequestConfig<D>,
+    args: AxiosExtCacheArgs
+  ) => boolean
+  transformData?: <T = any, D = any>(
+    response: AxiosResponse<T, D>,
+    config: AxiosRequestConfig<D>,
+    args: AxiosExtCacheArgs
+  ) => any
   onError?: (error: any) => void
   [K: string]: any
 }
@@ -185,7 +198,7 @@ const useAxiosExtCache: AxiosExtPlugin<AxiosExtCacheOptions> = function (axiosEx
     return shallowInstance as any
   }
 
-  const validateCache = async (args: Required<AxiosExtCacheArgs>) => {
+  const validateCache = async (args: Required<AxiosExtCacheArgs>, config: AxiosRequestConfig) => {
     let entity: AxiosExtCacheEntity | Nullish = null
     try {
       entity = await storeManager.get(args.key)
@@ -194,7 +207,7 @@ const useAxiosExtCache: AxiosExtPlugin<AxiosExtCacheOptions> = function (axiosEx
     }
     if (!entity) return false
 
-    const expired = baseOptions.isExpired!(entity, args)
+    const expired = baseOptions.isExpired!(entity, config, args)
     if (args.forceUpdate || expired) {
       try {
         await storeManager.remove(args.key)
@@ -222,7 +235,7 @@ const useAxiosExtCache: AxiosExtPlugin<AxiosExtCacheOptions> = function (axiosEx
       }
 
       try {
-        const entity = await validateCache(eventStore)
+        const entity = await validateCache(eventStore, config)
         if (entity !== false) {
           return setReturnValue(Promise.resolve(entity.data))
         }
@@ -230,17 +243,17 @@ const useAxiosExtCache: AxiosExtPlugin<AxiosExtCacheOptions> = function (axiosEx
         baseOptions.onError!(error)
       }
     },
-    onResponse: ($eventStore, response) => {
+    onResponse: ($eventStore, response, config) => {
       const eventStore = evtStoreManager.get($eventStore)
 
       if (isNullish(eventStore)) return
 
-      if (baseOptions.allowCache?.(response, eventStore) ?? true) {
+      if (baseOptions.allowCache?.(response, config, eventStore) ?? true) {
         const entity: AxiosExtCacheEntity = {
           key: eventStore.key,
           now: getNow(),
           expire: eventStore.expire,
-          data: baseOptions.transformData!(response, eventStore)
+          data: baseOptions.transformData!(response, config, eventStore)
         }
         storeManager.set(entity).catch(baseOptions.onError)
       }
