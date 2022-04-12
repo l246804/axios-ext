@@ -1,0 +1,50 @@
+{
+  "name": "@iel/axios-ext-preset",
+  "version": "0.0.0",
+  "description": "Preset of AxiosExt.",
+  "keywords": [
+    "axios",
+    "axios-extension",
+    "axios-ext",
+    "axios-ext-preset",
+    "preset"
+  ],
+  "author": "leihaohao <2468048176@qq.com>",
+  "homepage": "https://github.com/iel-h/axios-ext",
+  "license": "MIT",
+  "main": "lib/index.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iel-h/axios-ext.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "bugs": {
+    "url": "https://github.com/iel-h/axios-ext/issues"
+  },
+  "peerDependencies": {
+    "@iel/axios-ext": "latest"
+  },
+  "devDependencies": {
+    "@iel/axios-ext": "workspace:^0.0.0"
+  },
+  "dependencies": {
+    "@iel/axios-ext-cache": "workspace:^0.0.0",
+    "@iel/axios-ext-cancel-repeat": "workspace:^0.0.0",
+    "@iel/axios-ext-log": "workspace:^0.0.0",
+    "@iel/axios-ext-response-wrap": "workspace:^0.0.0",
+    "@iel/axios-ext-retry": "workspace:^0.0.0",
+    "@iel/axios-ext-utils": "workspace:^0.0.0"
+  }
+}

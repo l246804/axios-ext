@@ -23,7 +23,12 @@ export type AxiosExtRetryOptions = {
   delay?: number
   keepRetryOnSuccess?: (response: AxiosResponse) => boolean
   getErrorOnSuccess?: (response: AxiosResponse) => any
-  onRetrying?: (config: AxiosRequestConfig, options: Readonly<AxiosExtRetryOptions>) => void
+  onRetrying?: (params: {
+    num: number
+    config: AxiosRequestConfig
+    options: Readonly<AxiosExtRetryOptions>
+    interrupter: () => void
+  }) => void
   [K: string]: any
 }
 
@@ -62,6 +67,11 @@ const useAxiosExtRetry: AxiosExtPlugin<AxiosExtRetryOptions> = function (axiosEx
         let index = 0
         let response: any = null
         let error: any = null
+        let isInterrupted = false
+
+        const interrupter = () => {
+          isInterrupted = true
+        }
 
         const onError = async (_error: any) => {
           error = _error
@@ -73,8 +83,10 @@ const useAxiosExtRetry: AxiosExtPlugin<AxiosExtRetryOptions> = function (axiosEx
         return new Promise(async (resolve, reject) => {
           do {
             if (index > 0) {
-              eventStore.onRetrying?.(config, baseOptions)
+              eventStore.onRetrying?.({ num: index, config, options: eventStore, interrupter })
             }
+
+            if (isInterrupted) break
 
             try {
               response = await requestFn(config)
