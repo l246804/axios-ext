@@ -1,3 +1,3 @@
-# Axios Ext
+# `AxiosExt`
 
-Extend extra functionality for axios.
+为 `Axios` 扩展辅助功能。

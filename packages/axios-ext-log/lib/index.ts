@@ -1,9 +1,20 @@
-import { AxiosExtPlugin, ChainShallowAxiosInstance, OmitChainShallowAxiosInstance } from '@iel/axios-ext'
+import {
+  AxiosExtPlugin,
+  ChainShallowAxiosInstance,
+  createShallowAxiosInstance,
+  EVENT_STORE_KEY,
+  OmitChainShallowAxiosInstance,
+  onFinally,
+  onRequest
+} from '@iel/axios-ext'
 import { assignSafely, deleteKeys, helperCreateEventStoreManager, isBoolean, isPromise } from '@iel/axios-ext-utils'
 import { AxiosInstance } from 'axios'
 
 declare module 'axios' {
   interface AxiosInstance {
+    /**
+     * 输出阶段信息
+     */
     withLog: <T = ChainShallowAxiosInstance>(
       this: T,
       args?: AxiosExtLogArgs
@@ -13,10 +24,14 @@ declare module 'axios' {
 
 export type AxiosExtLogOptions = {
   /**
+   * 是否全局默认输出请求信息
+   *
    * @default false
    */
   globalOnRequest?: boolean
   /**
+   * 是否全局默认输出响应信息
+   *
    * @default false
    */
   globalOnResponse?: boolean
@@ -25,13 +40,17 @@ export type AxiosExtLogOptions = {
 
 export type AxiosExtLogArgs = {
   /**
+   * 是否输出请求信息
+   *
    * @default true
    */
-  enableOnRequest?: boolean
+  onRequest?: boolean
   /**
+   * 是否输出响应信息
+   *
    * @default true
    */
-  enableOnResponse?: boolean
+  onResponse?: boolean
   [K: string]: any
 }
 
@@ -47,12 +66,12 @@ const getValidOptions = (options: AxiosExtLogOptions = {}) => {
 
 const getValidArgs = (args: AxiosExtLogArgs = {}, options: AxiosExtLogOptions = {}) => {
   const _args: Required<AxiosExtLogArgs> = assignSafely(
-    { enableOnRequest: options.globalOnRequest, enableOnResponse: options.globalOnResponse },
+    { onRequest: options.globalOnRequest ?? true, onResponse: options.globalOnResponse ?? true },
     args
   )
 
-  if (!isBoolean(_args.enableOnRequest)) _args.enableOnRequest = !!_args.enableOnRequest
-  if (!isBoolean(_args.enableOnResponse)) _args.enableOnResponse = !!_args.enableOnResponse
+  if (!isBoolean(_args.onRequest)) _args.onRequest = !!_args.onRequest
+  if (!isBoolean(_args.onResponse)) _args.onResponse = !!_args.onResponse
 
   return _args
 }
@@ -70,14 +89,14 @@ const log = (prefix: string, obj: any, isError = false) => {
   )
 }
 
-const useAxiosExtLog: AxiosExtPlugin<AxiosExtLogOptions> = function (axiosExt, options) {
+const AxiosExtLogPlugin: AxiosExtPlugin<AxiosExtLogOptions> = function (axiosExt, options) {
   const baseOptions = getValidOptions(options)
   const instance = axiosExt.instance
 
   const withLog: AxiosInstance['withLog'] = function (args) {
-    const shallowInstance = axiosExt.createShallowAxiosInstance(this)
+    const shallowInstance = createShallowAxiosInstance(axiosExt, this)
 
-    evtStoreManager.set(shallowInstance.$eventStore, getValidArgs(args, options))
+    evtStoreManager.set(shallowInstance[EVENT_STORE_KEY], getValidArgs(args, options))
     deleteKeys(shallowInstance, ['withLog'])
 
     return shallowInstance as any
@@ -85,29 +104,28 @@ const useAxiosExtLog: AxiosExtPlugin<AxiosExtLogOptions> = function (axiosExt, o
 
   instance.withLog = withLog
 
-  return {
-    onRequest: ({ $eventStore, config }) => {
-      const eventStore = evtStoreManager.get($eventStore) ?? getValidArgs({}, baseOptions)
+  onRequest(({ $eventStore, config }) => {
+    const eventStore = evtStoreManager.get($eventStore) ?? getValidArgs({}, baseOptions)
 
-      if (!eventStore.enableOnRequest) return
+    if (!eventStore.onRequest) return
 
-      log('request', { $eventStore, config })
-    },
-    onResponseFinally: async ({ $eventStore, isError, returnValue, config }) => {
-      const eventStore = evtStoreManager.get($eventStore) ?? getValidArgs({}, baseOptions)
+    log('request', { $eventStore, config })
+  })
 
-      if (!eventStore.enableOnResponse) return
+  onFinally(async ({ $eventStore, isError, returnValue, config }) => {
+    const eventStore = evtStoreManager.get($eventStore) ?? getValidArgs({}, baseOptions)
 
-      if (isPromise(returnValue)) {
-        returnValue = await returnValue.catch((error) => {
-          isError = true
-          return Promise.resolve(error)
-        })
-      }
+    if (!eventStore.onResponse) return
 
-      log('response', { $eventStore, returnValue, config }, isError)
+    if (isPromise(returnValue)) {
+      returnValue = await returnValue.catch((error) => {
+        isError = true
+        return Promise.resolve(error)
+      })
     }
-  }
+
+    log('response', { $eventStore, returnValue, config }, isError)
+  })
 }
 
-export default useAxiosExtLog
+export default AxiosExtLogPlugin

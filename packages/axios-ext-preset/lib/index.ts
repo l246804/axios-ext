@@ -1,4 +1,4 @@
-import useAxiosExt from '@iel/axios-ext'
+import { createAxiosExt } from '@iel/axios-ext'
 import AxiosExtCache, { AxiosExtCacheOptions } from '@iel/axios-ext-cache'
 import AxiosExtCancelRepeat, { AxiosExtCancelRepeatOptions } from '@iel/axios-ext-cancel-repeat'
 import AxiosExtLog, { AxiosExtLogOptions } from '@iel/axios-ext-log'
@@ -29,6 +29,9 @@ const getPluginValidOptions = (options: any = {}, defaultOptions: any = {}) => {
   return _options
 }
 
+/**
+ * 预设 AxiosExt 插件功能
+ */
 export default function useAxiosExtPreset(instance: AxiosInstance, options: AxiosExtPresetOptions = {}) {
   const _options: Required<AxiosExtPresetOptions> = {
     Cache: getPluginValidOptions(options.Cache, {
@@ -51,7 +54,7 @@ export default function useAxiosExtPreset(instance: AxiosInstance, options: Axio
     Log: getPluginValidOptions(options.Log, { globalOnResponse: true })
   }
 
-  const axiosExt = useAxiosExt(instance)
+  const axiosExt = createAxiosExt(instance)
 
   const usePlugin = (plugin: any, opts: any) => {
     if (!opts.preset) return

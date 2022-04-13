@@ -2,7 +2,14 @@ import {
   AxiosExtPlugin,
   AxiosExtInstance,
   ChainShallowAxiosInstance,
-  OmitChainShallowAxiosInstance
+  OmitChainShallowAxiosInstance,
+  getKeyByConfig,
+  createShallowAxiosInstance,
+  EVENT_STORE_KEY,
+  onRequest,
+  onResponse,
+  onResponseError,
+  onDestroy
 } from '@iel/axios-ext'
 import {
   assignSafely,
@@ -20,10 +27,16 @@ import { AxiosInstance, AxiosRequestConfig } from 'axios'
 declare module 'axios' {
   interface AxiosInstance {
     CancelRepeat: ReturnType<typeof useStoreManager>
+    /**
+     * 不允许请求重复
+     */
     notAllowRepeat: <T = ChainShallowAxiosInstance>(
       this: T,
       args?: AxiosExtCancelRepeatArgs
     ) => OmitChainShallowAxiosInstance<T, 'notAllowRepeat' | 'allowRepeat' | 'CancelRepeat'>
+    /**
+     * 允许请求重复
+     */
     allowRepeat: <T = ChainShallowAxiosInstance>(
       this: T
     ) => OmitChainShallowAxiosInstance<T, 'allowRepeat' | 'notAllowRepeat' | 'CancelRepeat'>
@@ -31,14 +44,28 @@ declare module 'axios' {
 }
 
 export type AxiosExtCancelRepeatOptions = {
+  /**
+   * 是否全局默认不允许请求重复
+   *
+   * @default false
+   */
   globalNotAllowRepeat?: boolean
+  /**
+   * 标识生成器，默认根据配置项常用属性生成唯一标识
+   */
   keyGenerator?: (config: AxiosRequestConfig, args: AxiosExtCancelRepeatArgs) => string
+  /**
+   * 请求重复时需要返回的数据
+   */
   onRepeat?: (config: AxiosRequestConfig, args: AxiosExtCancelRepeatArgs) => any
   [K: string]: any
 }
 
 export type AxiosExtCancelRepeatArgs = {
-  key?: string
+  /**
+   * 请求标识
+   */
+  key?: AxiosExtPendingEntity['key']
   [K: string]: any
 }
 
@@ -67,7 +94,7 @@ const useStore = () => new Map<string, AxiosExtPendingEntity>()
 
 const useStoreManager = (store: ReturnType<typeof useStore>, axiosExt: AxiosExtInstance) => {
   const get = (configOrKey: AxiosExtCancelRepeatArgs['key'] | AxiosRequestConfig) => {
-    const key = isString(configOrKey) ? configOrKey : axiosExt.getKeyByConfig(configOrKey)
+    const key = isString(configOrKey) ? configOrKey : getKeyByConfig(axiosExt.instance, configOrKey)
 
     return store.get(key) ?? null
   }
@@ -79,7 +106,7 @@ const useStoreManager = (store: ReturnType<typeof useStore>, axiosExt: AxiosExtI
   }
 
   const remove = (configOrKey: AxiosExtPendingEntity['key'] | AxiosRequestConfig) => {
-    const key = isString(configOrKey) ? configOrKey : axiosExt.getKeyByConfig(configOrKey)
+    const key = isString(configOrKey) ? configOrKey : getKeyByConfig(axiosExt.instance, configOrKey)
 
     return store.delete(key)
   }
@@ -125,7 +152,7 @@ const useStoreManager = (store: ReturnType<typeof useStore>, axiosExt: AxiosExtI
   }
 }
 
-const useAxiosExtCancelRepeat: AxiosExtPlugin<AxiosExtCancelRepeatOptions> = function (axiosExt, options) {
+const AxiosExtCancelRepeatPlugin: AxiosExtPlugin<AxiosExtCancelRepeatOptions> = function (axiosExt, options) {
   const baseOptions = getValidOptions(options)
   const store = useStore()
   const storeManager = useStoreManager(store, axiosExt)
@@ -137,16 +164,16 @@ const useAxiosExtCancelRepeat: AxiosExtPlugin<AxiosExtCancelRepeatOptions> = fun
   const extraMethods = ['notAllowRepeat', 'allowRepeat', 'CancelRepeat']
 
   const notAllowRepeat: AxiosInstance['notAllowRepeat'] = function (args) {
-    const shallowInstance = axiosExt.createShallowAxiosInstance(this)
-    evtStoreManager.set(shallowInstance.$eventStore, { allowRepeat: false, args: getValidArgs(args) })
+    const shallowInstance = createShallowAxiosInstance(axiosExt, this)
+    evtStoreManager.set(shallowInstance[EVENT_STORE_KEY], { allowRepeat: false, args: getValidArgs(args) })
     deleteKeys(shallowInstance, extraMethods)
 
     return shallowInstance as any
   }
 
   const allowRepeat: AxiosInstance['allowRepeat'] = function () {
-    const shallowInstance = axiosExt.createShallowAxiosInstance(this)
-    evtStoreManager.set(shallowInstance.$eventStore, { allowRepeat: true, args: null })
+    const shallowInstance = createShallowAxiosInstance(axiosExt, this)
+    evtStoreManager.set(shallowInstance[EVENT_STORE_KEY], { allowRepeat: true, args: null })
     deleteKeys(shallowInstance, extraMethods)
 
     return shallowInstance as any
@@ -168,39 +195,39 @@ const useAxiosExtCancelRepeat: AxiosExtPlugin<AxiosExtCancelRepeatOptions> = fun
   instance.notAllowRepeat = notAllowRepeat
   instance.allowRepeat = allowRepeat
 
-  return {
-    onRequest: ({ $eventStore, config, setReturnValue }) => {
-      let eventStore = evtStoreManager.get($eventStore)
+  onRequest(({ $eventStore, config, setReturnValue }) => {
+    let eventStore = evtStoreManager.get($eventStore)
 
-      if (isNullish(eventStore)) {
-        if (!baseOptions.globalNotAllowRepeat) return
-        eventStore = evtStoreManager.set($eventStore, { allowRepeat: false, args: getValidArgs() })
-      }
-      if (eventStore.allowRepeat) return
-
-      const args = eventStore.args!
-
-      if (!args.key) {
-        args.key = baseOptions.keyGenerator?.(config, args) ?? axiosExt.getKeyByConfig(config)
-        args.key = String(args.key)
-      }
-
-      if (validateRepeat(args)) {
-        return setReturnValue(Promise.resolve(baseOptions.onRepeat!(config, args)))
-      }
-
-      const entity: AxiosExtPendingEntity = {
-        key: args.key,
-        config
-      }
-      storeManager.set(entity)
-    },
-    onResponse: cleanOnResponseFinally,
-    onResponseError: cleanOnResponseFinally,
-    onDestroy: () => {
-      storeManager.destroy()
+    if (isNullish(eventStore)) {
+      if (!baseOptions.globalNotAllowRepeat) return
+      eventStore = evtStoreManager.set($eventStore, { allowRepeat: false, args: getValidArgs() })
     }
-  }
+    if (eventStore.allowRepeat) return
+
+    const args = eventStore.args!
+
+    if (!args.key) {
+      args.key = baseOptions.keyGenerator?.(config, args) ?? getKeyByConfig(axiosExt.instance, config)
+      args.key = String(args.key)
+    }
+
+    if (validateRepeat(args)) {
+      return setReturnValue(Promise.resolve(baseOptions.onRepeat!(config, args)))
+    }
+
+    const entity: AxiosExtPendingEntity = {
+      key: args.key,
+      config
+    }
+    storeManager.set(entity)
+  })
+
+  onResponse(cleanOnResponseFinally)
+  onResponseError(cleanOnResponseFinally)
+
+  onDestroy(() => {
+    storeManager.destroy()
+  })
 }
 
-export default useAxiosExtCancelRepeat
+export default AxiosExtCancelRepeatPlugin

@@ -1,7 +1,7 @@
-import { AxiosExtInstance, OmitChainShallowAxiosInstance } from '@iel/axios-ext'
+import { AxiosExtInstance } from '@iel/axios-ext'
 import AxiosResponseTupleWrapper, { AxiosResponseTuple } from '@iel/axios-ext-response-wrap/lib/wrappers/tuple'
 import { ErrorAdaptor, SuccessAdaptor } from '@iel/axios-ext-response-wrap/lib/adaptors'
-import axios, { AxiosInstance } from 'axios'
+import axios from 'axios'
 import useAxiosExtPreset from '@iel/axios-ext-preset'
 
 declare module 'axios' {
@@ -13,14 +13,12 @@ declare module 'axios' {
   interface AxiosResponse<T = any, D = any> extends AxiosResponseTuple<T, D> {}
 }
 
-type IAxiosInstance = OmitChainShallowAxiosInstance<AxiosInstance, 'withLog'>
-
-export const http: IAxiosInstance = axios.create({
+export const http = axios.create({
   baseURL: '/api',
   timeout: 5000
 })
 
-function initExts() {
+function initExt() {
   const tupleWrapper = AxiosResponseTupleWrapper([ErrorAdaptor, SuccessAdaptor])
   const axiosExt = useAxiosExtPreset(http as any, {
     Cache: {
@@ -32,13 +30,10 @@ function initExts() {
     },
     ResponseWrap: {
       wrapper: tupleWrapper
-    },
-    Log: {
-      preset: false
     }
   })
 
   http.$axiosExt = axiosExt
 }
 
-initExts()
+initExt()

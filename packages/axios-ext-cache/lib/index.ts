@@ -2,7 +2,13 @@ import {
   AxiosExtPlugin,
   AxiosExtInstance,
   ChainShallowAxiosInstance,
-  OmitChainShallowAxiosInstance
+  OmitChainShallowAxiosInstance,
+  getKeyByConfig,
+  createShallowAxiosInstance,
+  EVENT_STORE_KEY,
+  onRequest,
+  onResponse,
+  onDestroy
 } from '@iel/axios-ext'
 import {
   isFunction,
@@ -24,6 +30,9 @@ import localforage from 'localforage'
 declare module 'axios' {
   interface AxiosInstance {
     Cache: ReturnType<typeof useStoreManager>
+    /**
+     * 使用缓存功能
+     */
     withCache: <T = ChainShallowAxiosInstance>(
       this: T,
       args?: AxiosExtCacheArgs
@@ -32,19 +41,51 @@ declare module 'axios' {
 }
 
 export type AxiosExtCacheOptions = {
+  /**
+   * 缓存仓储名
+   */
   storeName?: string | number
+  /**
+   * 配置仓储
+   */
   configStore?: (store: LocalForage) => void
+  /**
+   * 标识生成器，默认根据配置项常用属性生成唯一标识
+   */
   keyGenerator?: (config: AxiosRequestConfig, args: AxiosExtCacheArgs) => AxiosExtCacheEntity['key']
+  /**
+   * 判断缓存是否过期，默认根据过期时间验证
+   */
   isExpired?: (entity: AxiosExtCacheEntity, config: AxiosRequestConfig, args: AxiosExtCacheArgs) => boolean
+  /**
+   * 是否允许缓存
+   *
+   * @default true
+   */
   allowCache?: (response: AxiosResponse, config: AxiosRequestConfig, args: AxiosExtCacheArgs) => boolean
+  /**
+   * 缓存有效时返回的数据信息，默认返回 `response.data`
+   */
   transformData?: (response: AxiosResponse, config: AxiosRequestConfig, args: AxiosExtCacheArgs) => any
+  /**
+   * 操作仓储失败时执行回调
+   */
   onError?: (error: any) => void
   [K: string]: any
 }
 
 export type AxiosExtCacheArgs = {
+  /**
+   * 请求标识
+   */
   key?: AxiosExtCacheEntity['key']
+  /**
+   * 过期时间
+   */
   expire?: AxiosExtCacheEntity['expire']
+  /**
+   * 是否强制刷新缓存数据
+   */
   forceUpdate?: boolean
   [K: string]: any
 }
@@ -88,7 +129,7 @@ const useStore = (baseOptions: AxiosExtCacheOptions) => {
 
 const useStoreManager = (store: ReturnType<typeof useStore>, axiosExt: AxiosExtInstance) => {
   const get = async (configOrKey: AxiosExtCacheEntity['key'] | AxiosRequestConfig) => {
-    const key = isString(configOrKey) ? configOrKey : axiosExt.getKeyByConfig(configOrKey)
+    const key = isString(configOrKey) ? configOrKey : getKeyByConfig(axiosExt.instance, configOrKey)
 
     return store.getItem<AxiosExtCacheEntity>(key)
   }
@@ -100,7 +141,7 @@ const useStoreManager = (store: ReturnType<typeof useStore>, axiosExt: AxiosExtI
   }
 
   const remove = async (configOrKey: AxiosExtCacheEntity['key'] | AxiosRequestConfig) => {
-    const key = isString(configOrKey) ? configOrKey : axiosExt.getKeyByConfig(configOrKey)
+    const key = isString(configOrKey) ? configOrKey : getKeyByConfig(axiosExt.instance, configOrKey)
 
     return store.removeItem(key)
   }
@@ -181,7 +222,7 @@ const getValidArgs = (args: AxiosExtCacheArgs = {}) => {
   return _args
 }
 
-const useAxiosExtCache: AxiosExtPlugin<AxiosExtCacheOptions> = function (axiosExt, options) {
+const AxiosExtCachePlugin: AxiosExtPlugin<AxiosExtCacheOptions> = function (axiosExt, options) {
   const baseOptions = getValidOptions(options)
   const store = useStore(baseOptions)
   const storeManager = useStoreManager(store, axiosExt)
@@ -189,8 +230,8 @@ const useAxiosExtCache: AxiosExtPlugin<AxiosExtCacheOptions> = function (axiosEx
   const instance = axiosExt.instance
 
   const withCache: AxiosInstance['withCache'] = function (args) {
-    const shallowInstance = axiosExt.createShallowAxiosInstance(this)
-    evtStoreManager.set(shallowInstance.$eventStore, getValidArgs(args))
+    const shallowInstance = createShallowAxiosInstance(axiosExt, this)
+    evtStoreManager.set(shallowInstance[EVENT_STORE_KEY], getValidArgs(args))
     deleteKeys(shallowInstance, ['withCache', 'Cache'])
 
     return shallowInstance as any
@@ -221,53 +262,53 @@ const useAxiosExtCache: AxiosExtPlugin<AxiosExtCacheOptions> = function (axiosEx
   instance.Cache = storeManager
   instance.withCache = withCache
 
-  return {
-    onRequest: async ({ $eventStore, config, setReturnValue }) => {
-      const eventStore = evtStoreManager.get($eventStore)
+  onRequest(async ({ $eventStore, config, setReturnValue }) => {
+    const eventStore = evtStoreManager.get($eventStore)
 
-      if (isNullish(eventStore)) return
+    if (isNullish(eventStore)) return
 
-      if (!eventStore.key) {
-        eventStore.key = baseOptions.keyGenerator?.(config, eventStore) ?? axiosExt.getKeyByConfig(config)
-        eventStore.key = String(eventStore.key)
-      }
-
-      try {
-        const entity = await validateCache(eventStore, config)
-        if (entity !== false) {
-          const { response, config, args } = entity.data
-
-          return setReturnValue(Promise.resolve(baseOptions.transformData!(response, config, args)))
-        }
-      } catch (error) {
-        baseOptions.onError!(error)
-      }
-    },
-    onResponse: ({ $eventStore, response, config }) => {
-      const eventStore = evtStoreManager.get($eventStore)
-
-      if (isNullish(eventStore)) return
-
-      if (baseOptions.allowCache?.(response, config, eventStore) ?? true) {
-        const _response = {
-          ...response,
-          request: null,
-          // 仅能存储非函数属性
-          config: omit(response.config, (val) => isObject(val) || isFunction(val))
-        }
-        const entity: AxiosExtCacheEntity = {
-          key: eventStore.key,
-          now: getNow(),
-          expire: eventStore.expire,
-          data: { response: _response, config, args: eventStore }
-        }
-        storeManager.set(entity).catch(baseOptions.onError)
-      }
-    },
-    onDestroy: () => {
-      storeManager.destroy()
+    if (!eventStore.key) {
+      eventStore.key = baseOptions.keyGenerator?.(config, eventStore) ?? getKeyByConfig(axiosExt.instance, config)
+      eventStore.key = String(eventStore.key)
     }
-  }
+
+    try {
+      const entity = await validateCache(eventStore, config)
+      if (entity !== false) {
+        const { response, config, args } = entity.data
+
+        return setReturnValue(Promise.resolve(baseOptions.transformData!(response, config, args)))
+      }
+    } catch (error) {
+      baseOptions.onError!(error)
+    }
+  })
+
+  onResponse(({ $eventStore, response, config }) => {
+    const eventStore = evtStoreManager.get($eventStore)
+    if (isNullish(eventStore)) return
+
+    const allowCache = baseOptions.allowCache?.(response, config, eventStore) ?? true
+    if (!allowCache) return
+
+    const _response = {
+      ...response,
+      request: null,
+      // 仅能存储非函数属性
+      config: omit(response.config, (val) => isObject(val) || isFunction(val))
+    }
+    const entity: AxiosExtCacheEntity = {
+      key: eventStore.key,
+      now: getNow(),
+      expire: eventStore.expire,
+      data: { response: _response, config, args: eventStore }
+    }
+    storeManager.set(entity).catch(baseOptions.onError)
+  })
+
+  onDestroy(() => {
+    storeManager.destroy()
+  })
 }
 
-export default useAxiosExtCache
+export default AxiosExtCachePlugin
