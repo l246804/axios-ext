@@ -23,7 +23,7 @@ export type AxiosResponseTuple<T = any, D = any> = [
  * 元祖响应包装器
  * 使用后将响应数据或错误信息以元祖形式返回。
  */
-export default function tupleWrapper(adaptors: AxiosResponseAdaptor | AxiosResponseAdaptor[]) {
+export default function wrapper(adaptors: AxiosResponseAdaptor | AxiosResponseAdaptor[]) {
   const _adaptors = isArray(adaptors) ? adaptors : [adaptors]
 
   const wrapper: Required<AxiosResponseWrapper> = {

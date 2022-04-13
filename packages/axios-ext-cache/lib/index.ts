@@ -29,7 +29,7 @@ import localforage from 'localforage'
 
 declare module 'axios' {
   interface AxiosInstance {
-    Cache: ReturnType<typeof useStoreManager>
+    Cache: StoreManager
     /**
      * 使用缓存功能
      */
@@ -126,6 +126,8 @@ const useStore = (baseOptions: AxiosExtCacheOptions) => {
 
   return store
 }
+
+export type StoreManager = ReturnType<typeof useStoreManager>
 
 const useStoreManager = (store: ReturnType<typeof useStore>, axiosExt: AxiosExtInstance) => {
   const get = async (configOrKey: AxiosExtCacheEntity['key'] | AxiosRequestConfig) => {
