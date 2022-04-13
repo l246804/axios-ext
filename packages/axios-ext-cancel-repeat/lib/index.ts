@@ -26,7 +26,7 @@ import { AxiosInstance, AxiosRequestConfig } from 'axios'
 
 declare module 'axios' {
   interface AxiosInstance {
-    CancelRepeat: ReturnType<typeof useStoreManager>
+    CancelRepeat: StoreManager
     /**
      * 不允许请求重复
      */
@@ -91,6 +91,8 @@ const getValidArgs = (args: AxiosExtCancelRepeatArgs = {}) => {
 }
 
 const useStore = () => new Map<string, AxiosExtPendingEntity>()
+
+export type StoreManager = ReturnType<typeof useStoreManager>
 
 const useStoreManager = (store: ReturnType<typeof useStore>, axiosExt: AxiosExtInstance) => {
   const get = (configOrKey: AxiosExtCancelRepeatArgs['key'] | AxiosRequestConfig) => {
