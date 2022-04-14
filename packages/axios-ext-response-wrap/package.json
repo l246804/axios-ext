@@ -36,7 +36,7 @@
   },
   "peerDependencies": {
     "axios": ">=0.26.1",
-    "@iel/axios-ext": "latest"
+    "@iel/axios-ext": "workspace:^0.0.0"
   },
   "devDependencies": {
     "@iel/axios-ext": "workspace:^0.0.0"
