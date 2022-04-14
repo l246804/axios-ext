@@ -12,14 +12,22 @@ export const resolveRoot = (...paths) => resolve(__dirname, '..', ...paths)
 
 export const resolvePackages = (...paths) => resolveRoot('packages', ...paths)
 
-export const resolvePkgJson = (pkgDir) =>
-  JSON.parse(fs.readFileSync(resolve(pkgDir, 'package.json'), { encoding: 'utf-8' }))
+export const resolvePkgJson = (pkgDir) => resolveJson(resolve(pkgDir, 'package.json'))
+
+export const resolveJson = (dir) => JSON.parse(fs.readFileSync(dir, { encoding: 'utf-8' }))
 
 export const resolvePkgDirs = () => {
   const pkgDir = resolvePackages()
   const subPkgs = fs.readdirSync(pkgDir, { encoding: 'utf-8' }).map((name) => resolve(pkgDir, name))
 
   return subPkgs.filter((subPkgDir) => !resolvePkgJson(subPkgDir).private)
+}
+
+export const resolvePrivatePkgDirs = () => {
+  const pkgDir = resolvePackages()
+  const subPkgs = fs.readdirSync(pkgDir, { encoding: 'utf-8' }).map((name) => resolve(pkgDir, name))
+
+  return subPkgs.filter((subPkgDir) => !!resolvePkgJson(subPkgDir).private)
 }
 
 export const resolveBanner = ({ name, description, version, homepage, license } = {}) => ({

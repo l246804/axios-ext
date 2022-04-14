@@ -17,6 +17,7 @@
     "fmt:code": "prettier --write ./packages/**/*.ts",
     "fmt:fix": "eslint --fix ./packages/**/*.ts",
     "clean": "rimraf node_modules **/*/node_modules",
+    "changeset:update": "node ./scripts/changeset.mjs",
     "version-packages": "changeset version",
     "prerelease": "pnpm build:r",
     "release": "changeset publish"
