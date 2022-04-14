@@ -20,7 +20,7 @@
     "changeset:update": "node ./scripts/changeset.mjs",
     "version-packages": "changeset version",
     "prerelease": "pnpm build:r",
-    "release": "pnpm publish -r"
+    "release": "pnpm publish -r --access public"
   },
   "devDependencies": {
     "@changesets/cli": "^2.22.0",
