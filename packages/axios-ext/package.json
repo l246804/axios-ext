@@ -1,6 +1,6 @@
 {
   "name": "@iel/axios-ext",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Extend extra functionality for axios.",
   "keywords": [
     "axios",
@@ -35,6 +35,6 @@
     "axios": ">=0.26.1"
   },
   "dependencies": {
-    "@iel/axios-ext-utils": "workspace:^0.0.0"
+    "@iel/axios-ext-utils": "workspace:^1.0.0"
   }
 }
