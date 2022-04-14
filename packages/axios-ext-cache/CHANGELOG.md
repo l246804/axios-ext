@@ -1,14 +1,5 @@
 # @iel/axios-ext-cache
 
-## 1.0.1
-
-### Patch Changes
-
-- 211e14a: hotfix: update package
-- Updated dependencies [211e14a]
-  - @iel/axios-ext@1.0.1
-  - @iel/axios-ext-utils@1.0.1
-
 ## 1.0.0
 
 ### Major Changes
