@@ -1,5 +1,14 @@
 # @iel/axios-ext-cancel-repeat
 
+## 1.0.1
+
+### Patch Changes
+
+- 6c18af3: hotfix: update package
+- Updated dependencies [6c18af3]
+  - @iel/axios-ext@1.0.1
+  - @iel/axios-ext-utils@1.0.1
+
 ## 1.0.0
 
 ### Major Changes
