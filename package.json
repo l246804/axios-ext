@@ -23,7 +23,7 @@
     "cs:version": "changeset version",
     "cs:tag": "changeset tag",
     "prerelease": "pnpm build:r",
-    "release": "pnpm publish -r --access public",
+    "release": "pnpm publish -r --access public --no-git-checks",
     "postrelease": "pnpm cs:tag"
   },
   "devDependencies": {
