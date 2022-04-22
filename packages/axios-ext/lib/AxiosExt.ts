@@ -1,6 +1,6 @@
-import { assignSafely, isFunction, isPromise, isString } from '@iel/axios-ext-utils'
-import axios, { AxiosInstance } from 'axios'
-import { EVENT_STORE_KEY, ShallowAxiosInstance, SHALLOW_INSTANCE_KEY } from './helper'
+import { assignSafely, isFunction, isPlainObject, isPromise, isString } from '@iel/axios-ext-utils'
+import { AxiosInstance } from 'axios'
+import { EVENT_STORE_KEY, isAxiosInstance, ShallowAxiosInstance, SHALLOW_INSTANCE_KEY } from './helper'
 import { setupPlugin } from './lifecycle'
 import AxiosExtPluginManager, { AxiosExtPlugin, AxiosExtPluginManagerInstance } from './PluginManager'
 
@@ -19,17 +19,17 @@ class AxiosExt {
   plugins: AxiosExtPluginManagerInstance
 
   constructor(instance: AxiosInstance) {
-    if (![axios.constructor, axios.Axios].some((ctor) => instance instanceof ctor)) {
+    if (!isAxiosInstance(instance)) {
       throw Error(`${logPrefix}参数 instance 必须是 Axios 的实例。`)
-    }
-
-    if (SHALLOW_INSTANCE_KEY in instance) {
-      throw Error(`${logPrefix}参数 instance 不能是浅层拷贝实例。`)
     }
 
     this.instance = instance
     this.rawRequestFn = instance.request
     this.plugins = new AxiosExtPluginManager()
+
+    if (SHALLOW_INSTANCE_KEY in instance) {
+      return this
+    }
 
     this.init()
   }
@@ -58,7 +58,8 @@ class AxiosExt {
     const axiosExt = this
 
     return function (this: ShallowAxiosInstance) {
-      const $eventStore = this[EVENT_STORE_KEY]
+      // 原始 axios 实例调用方法时不存在 eventStore
+      const $eventStore = isPlainObject(this[EVENT_STORE_KEY]) ? this[EVENT_STORE_KEY] : {}
 
       // eslint-disable-next-line prefer-const, prefer-rest-params
       let [configOrUrl, configOrData, config] = Array.from(arguments)
@@ -150,6 +151,8 @@ class AxiosExt {
   }
 }
 
-export function createAxiosExt(instance: AxiosInstance) {
+export function createAxiosExt(instance: any): AxiosExtInstance {
+  if (instance.$axiosExt) return instance.$axiosExt
+
   return new AxiosExt(instance)
 }

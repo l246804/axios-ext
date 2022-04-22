@@ -1,6 +1,6 @@
-import { buildFullPath, extend, isPlainObject, pick, serialize } from '@iel/axios-ext-utils'
-import { AxiosInstance, AxiosRequestConfig } from 'axios'
-import { AxiosExtInstance } from './AxiosExt'
+import { bind, buildFullPath, deepCopy, extend, pick, serialize } from '@iel/axios-ext-utils'
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios'
+import { AxiosExtInstance, createAxiosExt } from './AxiosExt'
 
 /**
  * 是否为浅层拷贝实例标志
@@ -27,18 +27,49 @@ export type OmitChainShallowAxiosInstance<T, K> = Omit<T, K extends keyof T ? K 
 export type EventStoreType = ShallowAxiosInstance[typeof EVENT_STORE_KEY]
 
 /**
+ * 判断是否为 axios 实例
+ */
+export function isAxiosInstance(context: any): context is AxiosInstance {
+  return [axios.constructor, axios.Axios].some((ctor) => context instanceof ctor)
+}
+
+/**
+ * 创建 axios 实例，用于弥补原始 axios 无法自调用触发插件规则
+ */
+export function createAxios(config?: AxiosInstance | AxiosRequestConfig) {
+  const context = isAxiosInstance(config) ? config : axios.create(config)
+  const axiosExt = createAxiosExt(context)
+  const instance = createShallowAxiosInstance(axiosExt, context)
+
+  const rawUse = bind(axiosExt.use, axiosExt)
+  const use = function (...args: any) {
+    const result = rawUse(...args)
+    // 每次挂载完插件后需重新继承 axios 实例属性和方法，防止存在差异
+    Promise.resolve(true).then(() => {
+      extend(instance, axiosExt.instance)
+    })
+    return result
+  }
+
+  axiosExt.use = bind(use, axiosExt)
+  instance.$axiosExt = axiosExt
+
+  return instance as AxiosInstance & { $axiosExt: AxiosExtInstance }
+}
+
+/**
  * 创建浅层拷贝实例
  */
 export function createShallowAxiosInstance(axiosExt: AxiosExtInstance, thisArg: ChainShallowAxiosInstance) {
-  const shallowAxiosInstance: any = axiosExt.rawRequestFn
+  const shallowAxiosInstance: any = (...args: any) => {
+    return axiosExt.instance.request.apply(thisArg, args)
+  }
 
   extend(shallowAxiosInstance, thisArg, shallowAxiosInstance)
 
-  if (!isPlainObject(shallowAxiosInstance[EVENT_STORE_KEY])) {
-    shallowAxiosInstance[EVENT_STORE_KEY] = {}
-  }
-
+  shallowAxiosInstance[EVENT_STORE_KEY] = deepCopy(shallowAxiosInstance[EVENT_STORE_KEY] || {})
   shallowAxiosInstance[SHALLOW_INSTANCE_KEY] = true
+
   return shallowAxiosInstance as ShallowAxiosInstance
 }
 

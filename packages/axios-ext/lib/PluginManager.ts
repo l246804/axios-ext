@@ -6,11 +6,29 @@ import { EventStoreType } from './helper'
 export type AxiosExtPlugin<T = any> = (axiosExt: AxiosExtInstance, options: T) => void
 
 type HookCommonParams = {
+  /**
+   * 事件仓储
+   */
   $eventStore: EventStoreType
+  /**
+   * 请求配置项
+   */
   config: AxiosRequestConfig
+  /**
+   * 响应最终的返回值
+   */
   returnValue: any
+  /**
+   * 设置响应返回值，若调用 `resolve` 后将固定返回值不再被更新
+   */
   setReturnValue: (value: any) => void
+  /**
+   * 确定最终的返回值，仅在首次调用时生效
+   */
   resolve: (value: any) => void
+  /**
+   * 抛出错误，仅在首次调用时生效
+   */
   reject: (error: any) => void
 }
 
@@ -18,17 +36,42 @@ type AxiosRequestFnType = AxiosInstance['request']
 
 export type AxiosExtPluginOnRequestHook = (
   params: {
+    /**
+     * 请求方法
+     */
     requestFn: AxiosRequestFnType
+    /**
+     * 更改请求方法
+     */
     setRequestFn: (fn: any) => void
   } & HookCommonParams
 ) => void
 
-export type AxiosExtPluginOnResponseHook = (params: { response: AxiosResponse } & HookCommonParams) => void
+export type AxiosExtPluginOnResponseHook = (
+  params: {
+    /**
+     * `axios` 响应结果
+     */
+    response: AxiosResponse
+  } & HookCommonParams
+) => void
 
-export type AxiosExtPluginOnResponseErrorHook = (params: { error: AxiosError } & HookCommonParams) => void
+export type AxiosExtPluginOnResponseErrorHook = (
+  params: {
+    /**
+     * `axios` 响应错误
+     */
+    error: AxiosError
+  } & HookCommonParams
+) => void
 
 export type AxiosExtPluginOnFinallyHook = (
-  params: { isError: boolean } & Pick<HookCommonParams, '$eventStore' | 'config' | 'returnValue'>
+  params: {
+    /**
+     * 接口请求是否错误，仅区分正常响应和错误响应
+     */
+    isError: boolean
+  } & Pick<HookCommonParams, '$eventStore' | 'config' | 'returnValue'>
 ) => void
 
 export type AxiosExtPluginOnDestroyHook = () => void

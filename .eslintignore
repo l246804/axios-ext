@@ -1,2 +1,2 @@
-packages/**/__test__
-packages/**/dist
+**/node_modules
+packages/*/dist

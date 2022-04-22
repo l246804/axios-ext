@@ -6,7 +6,8 @@ export * from './checkType'
 export * from './helperEventStore'
 
 export function assignSafely(target: object = {}, ...sources: any) {
-  return Object.assign({}, target, ...sources)
+  const onlySource = Object.assign({}, target, ...sources)
+  return Object.assign({}, deepCopy(onlySource))
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -84,4 +85,36 @@ export async function sleep(ms = 0) {
   return new Promise<boolean>((resolve) => {
     setTimeout(() => resolve(true), ms)
   })
+}
+
+/**
+ * Deep copy the given object considering circular structure.
+ * This function caches all nested objects and its copies.
+ * If it detects circular structure, use cached copy to avoid infinite loop.
+ */
+ export function deepCopy<T = any>(obj: T, cache: any[] = []): T {
+  // just return if obj is immutable value
+  if (obj === null || typeof obj !== 'object') {
+    return obj
+  }
+
+  // if obj is hit, it is in circular structure
+  const hit = cache.find((c) => c.original === obj)
+  if (hit) {
+    return hit.copy
+  }
+
+  const copy: any = Array.isArray(obj) ? [] : {}
+  // put the copy into cache at first
+  // because we want to refer it in recursive deepCopy
+  cache.push({
+    original: obj,
+    copy
+  })
+
+  Object.keys(obj).forEach((key) => {
+    copy[key] = deepCopy((obj as any)[key], cache)
+  })
+
+  return copy
 }
