@@ -1,7 +1,6 @@
-import { AxiosExtInstance } from '@iel/axios-ext'
+import { AxiosExtInstance, createAxios } from '@iel/axios-ext'
 import AxiosResponseTupleWrapper, { AxiosResponseTuple } from '@iel/axios-ext-response-wrap/lib/wrappers/tuple'
 import { ErrorAdaptor, SuccessAdaptor } from '@iel/axios-ext-response-wrap/lib/adaptors'
-import axios from 'axios'
 import useAxiosExtPreset from '@iel/axios-ext-preset'
 
 declare module 'axios' {
@@ -13,8 +12,8 @@ declare module 'axios' {
   interface AxiosResponse<T = any, D = any> extends AxiosResponseTuple<T, D> {}
 }
 
-export const http = axios.create({
-  baseURL: '/api',
+export const http = createAxios({
+  baseURL: 'https://www.fastmock.site/mock/9f00454804589fac6a7f595c559d2ab8/api',
   timeout: 5000
 })
 
@@ -26,7 +25,7 @@ function initExt() {
       allowCache: (response, config) => !tupleWrapper.transformResponseData(response, config)[0]
     },
     CancelRepeat: {
-      onRepeat: () => [true, 'manualCancel']
+      onRepeat: () => [true, '取消重复接口']
     },
     ResponseWrap: {
       wrapper: tupleWrapper

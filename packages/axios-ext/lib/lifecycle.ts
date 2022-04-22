@@ -17,6 +17,8 @@ export type HelperCreateHook<T = any> = (callback: T) => void
 
 /**
  * 请求时执行回调函数
+ *
+ * ***注意：在当前阶段设置 returnValue 为 Promise ，则提前返回数据并终止后续操作***
  */
 export let onRequest: HelperCreateHook<AxiosExtPluginOnRequestHook> = noop
 /**

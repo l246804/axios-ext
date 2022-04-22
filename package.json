@@ -10,17 +10,19 @@
     "plop": "plop & rimraf ./plopfile.mjs",
     "postplop": "pnpm i",
     "dev": "pnpm -C ./packages/axios-ext-example dev",
-    "prebuild": "rimraf packages/**/dist",
+    "prebuild": "rimraf packages/*/dist",
     "build": "node ./scripts/build.mjs",
     "build:r": "pnpm build -r",
+    "build:web": "pnpm -C ./packages/axios-ext-example build",
     "fmt": "pnpm fmt:code && pnpm fmt:fix",
-    "fmt:code": "prettier --write ./packages/**/*.ts",
-    "fmt:fix": "eslint --fix ./packages/**/*.ts",
+    "fmt:code": "prettier --write ./packages/*/*.ts",
+    "fmt:fix": "eslint --fix ./packages/*/*.ts",
     "clean": "rimraf node_modules **/*/node_modules",
+    "changeset": "changeset",
     "changeset:update": "node ./scripts/changeset.mjs",
     "version-packages": "changeset version",
     "prerelease": "pnpm build:r",
-    "release": "pnpm publish -r --access public"
+    "release": "changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.22.0",
