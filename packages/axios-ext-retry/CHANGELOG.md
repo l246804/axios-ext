@@ -1,5 +1,14 @@
 # @iel/axios-ext-retry
 
+## 1.0.3
+
+### Patch Changes
+
+- f87e855: hotfix: 修复发布包依赖错误
+- Updated dependencies [f87e855]
+  - @iel/axios-ext@1.0.3
+  - @iel/axios-ext-utils@1.0.3
+
 ## 1.0.2
 
 ### Patch Changes
