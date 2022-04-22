@@ -47,14 +47,14 @@ importers:
 
   packages/axios-ext:
     specifiers:
-      '@iel/axios-ext-utils': workspace:^1.0.1
+      '@iel/axios-ext-utils': workspace:^1.0.2
     dependencies:
       '@iel/axios-ext-utils': link:../axios-ext-utils
 
   packages/axios-ext-cache:
     specifiers:
-      '@iel/axios-ext': workspace:^1.0.1
-      '@iel/axios-ext-utils': workspace:^1.0.1
+      '@iel/axios-ext': workspace:^1.0.2
+      '@iel/axios-ext-utils': workspace:^1.0.2
       localforage: ^1.10.0
     dependencies:
       '@iel/axios-ext-utils': link:../axios-ext-utils
@@ -64,8 +64,8 @@ importers:
 
   packages/axios-ext-cancel-repeat:
     specifiers:
-      '@iel/axios-ext': workspace:^1.0.1
-      '@iel/axios-ext-utils': workspace:^1.0.1
+      '@iel/axios-ext': workspace:^1.0.2
+      '@iel/axios-ext-utils': workspace:^1.0.2
     dependencies:
       '@iel/axios-ext-utils': link:../axios-ext-utils
     devDependencies:
@@ -73,14 +73,14 @@ importers:
 
   packages/axios-ext-example:
     specifiers:
-      '@iel/axios-ext': workspace:^1.0.1
-      '@iel/axios-ext-cache': workspace:^1.0.1
-      '@iel/axios-ext-cancel-repeat': workspace:^1.0.1
-      '@iel/axios-ext-log': workspace:^1.0.1
-      '@iel/axios-ext-preset': workspace:^1.0.1
-      '@iel/axios-ext-response-wrap': workspace:^1.0.1
-      '@iel/axios-ext-retry': workspace:^1.0.1
-      '@iel/axios-ext-utils': workspace:^1.0.1
+      '@iel/axios-ext': workspace:^1.0.2
+      '@iel/axios-ext-cache': workspace:^1.0.2
+      '@iel/axios-ext-cancel-repeat': workspace:^1.0.2
+      '@iel/axios-ext-log': workspace:^1.0.2
+      '@iel/axios-ext-preset': workspace:^1.0.2
+      '@iel/axios-ext-response-wrap': workspace:^1.0.2
+      '@iel/axios-ext-retry': workspace:^1.0.2
+      '@iel/axios-ext-utils': workspace:^1.0.2
       '@vitejs/plugin-vue': ^2.3.0
       typescript: ^4.5.4
       vite: ^2.9.0
@@ -104,8 +104,8 @@ importers:
 
   packages/axios-ext-log:
     specifiers:
-      '@iel/axios-ext': workspace:^1.0.1
-      '@iel/axios-ext-utils': workspace:^1.0.1
+      '@iel/axios-ext': workspace:^1.0.2
+      '@iel/axios-ext-utils': workspace:^1.0.2
     dependencies:
       '@iel/axios-ext-utils': link:../axios-ext-utils
     devDependencies:
@@ -113,13 +113,13 @@ importers:
 
   packages/axios-ext-preset:
     specifiers:
-      '@iel/axios-ext': workspace:^1.0.1
-      '@iel/axios-ext-cache': workspace:^1.0.1
-      '@iel/axios-ext-cancel-repeat': workspace:^1.0.1
-      '@iel/axios-ext-log': workspace:^1.0.1
-      '@iel/axios-ext-response-wrap': workspace:^1.0.1
-      '@iel/axios-ext-retry': workspace:^1.0.1
-      '@iel/axios-ext-utils': workspace:^1.0.1
+      '@iel/axios-ext': workspace:^1.0.2
+      '@iel/axios-ext-cache': workspace:^1.0.2
+      '@iel/axios-ext-cancel-repeat': workspace:^1.0.2
+      '@iel/axios-ext-log': workspace:^1.0.2
+      '@iel/axios-ext-response-wrap': workspace:^1.0.2
+      '@iel/axios-ext-retry': workspace:^1.0.2
+      '@iel/axios-ext-utils': workspace:^1.0.2
     dependencies:
       '@iel/axios-ext-cache': link:../axios-ext-cache
       '@iel/axios-ext-cancel-repeat': link:../axios-ext-cancel-repeat
@@ -132,8 +132,8 @@ importers:
 
   packages/axios-ext-response-wrap:
     specifiers:
-      '@iel/axios-ext': workspace:^1.0.1
-      '@iel/axios-ext-utils': workspace:^1.0.1
+      '@iel/axios-ext': workspace:^1.0.2
+      '@iel/axios-ext-utils': workspace:^1.0.2
     dependencies:
       '@iel/axios-ext-utils': link:../axios-ext-utils
     devDependencies:
@@ -141,8 +141,8 @@ importers:
 
   packages/axios-ext-retry:
     specifiers:
-      '@iel/axios-ext': workspace:^1.0.1
-      '@iel/axios-ext-utils': workspace:^1.0.1
+      '@iel/axios-ext': workspace:^1.0.2
+      '@iel/axios-ext-utils': workspace:^1.0.2
     dependencies:
       '@iel/axios-ext-utils': link:../axios-ext-utils
     devDependencies:
