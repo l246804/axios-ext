@@ -1,5 +1,17 @@
 # @iel/axios-ext-retry
 
+## 1.0.2
+
+### Patch Changes
+
+- 1163aad: hotfix: update package
+- 7d26372: - 支持 axios 自调用时应用扩展功能
+  - 补充文档说明
+- Updated dependencies [1163aad]
+- Updated dependencies [7d26372]
+  - @iel/axios-ext@1.0.2
+  - @iel/axios-ext-utils@1.0.2
+
 ## 1.0.1
 
 ### Patch Changes
