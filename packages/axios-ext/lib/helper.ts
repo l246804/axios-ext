@@ -39,7 +39,7 @@ export function isAxiosInstance(context: any): context is AxiosInstance {
 export function createAxios(config?: AxiosInstance | AxiosRequestConfig) {
   const context = isAxiosInstance(config) ? config : axios.create(config)
   const axiosExt = createAxiosExt(context)
-  const instance = createShallowAxiosInstance(axiosExt, context)
+  const instance: any = createShallowAxiosInstance(axiosExt, context)
 
   const rawUse = bind(axiosExt.use, axiosExt)
   const use = function (...args: any) {

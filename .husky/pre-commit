@@ -1,6 +1,6 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-pnpm changeset:update
+pnpm cs:update
 pnpm fmt
 git add .

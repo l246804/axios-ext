@@ -1,4 +1,4 @@
-name: Changesets
+name: Publish
 on:
   push:
     branches:
@@ -30,7 +30,7 @@ jobs:
       - name: create and publish versions
         uses: changesets/action@v1
         with:
-          version: pnpm version-packages
+          version: pnpm cs:version
           commit: "chore: update versions"
           title: "chore: update versions"
           publish: pnpm release
