@@ -1,5 +1,11 @@
 # @iel/axios-ext-utils
 
+## 1.0.3
+
+### Patch Changes
+
+- f87e855: hotfix: 修复发布包依赖错误
+
 ## 1.0.2
 
 ### Patch Changes
