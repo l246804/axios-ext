@@ -1,5 +1,11 @@
 # @iel/axios-ext-utils
 
+## 1.0.4
+
+### Patch Changes
+
+- 110a848: hotfix: Fix the release package cannot be installed normally.
+
 ## 1.0.3
 
 ### Patch Changes
