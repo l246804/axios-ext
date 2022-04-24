@@ -1,5 +1,19 @@
 # @iel/axios-ext-preset
 
+## 1.0.4
+
+### Patch Changes
+
+- 110a848: hotfix: Fix the release package cannot be installed normally.
+- Updated dependencies [110a848]
+  - @iel/axios-ext@1.0.4
+  - @iel/axios-ext-cache@1.0.4
+  - @iel/axios-ext-cancel-repeat@1.0.4
+  - @iel/axios-ext-log@1.0.4
+  - @iel/axios-ext-response-wrap@1.0.4
+  - @iel/axios-ext-retry@1.0.4
+  - @iel/axios-ext-utils@1.0.4
+
 ## 1.0.3
 
 ### Patch Changes
