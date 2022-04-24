@@ -1,6 +1,6 @@
 {
   "name": "@iel/axios-ext-retry",
-  "version": "1.0.4",
+  "version": "1.0.3",
   "description": "Retry request when axios fails.",
   "keywords": [
     "axios",
@@ -35,12 +35,12 @@
   },
   "peerDependencies": {
     "axios": ">=0.26.1",
-    "@iel/axios-ext": "workspace:^1.0.4"
+    "@iel/axios-ext": "workspace:^1.0.3"
   },
   "devDependencies": {
-    "@iel/axios-ext": "workspace:^1.0.4"
+    "@iel/axios-ext": "workspace:^1.0.3"
   },
   "dependencies": {
-    "@iel/axios-ext-utils": "workspace:^1.0.4"
+    "@iel/axios-ext-utils": "workspace:^1.0.3"
   }
 }
