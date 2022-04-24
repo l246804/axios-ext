@@ -1,6 +1,6 @@
 {
   "name": "@iel/axios-ext-cancel-repeat",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Cancel repeat request of axios.",
   "keywords": [
     "axios",
@@ -35,12 +35,12 @@
   },
   "peerDependencies": {
     "axios": ">=0.26.1",
-    "@iel/axios-ext": "workspace:^1.0.3"
+    "@iel/axios-ext": "workspace:^1.0.4"
   },
   "dependencies": {
-    "@iel/axios-ext-utils": "workspace:^1.0.3"
+    "@iel/axios-ext-utils": "workspace:^1.0.4"
   },
   "devDependencies": {
-    "@iel/axios-ext": "workspace:^1.0.3"
+    "@iel/axios-ext": "workspace:^1.0.4"
   }
 }

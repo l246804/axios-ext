@@ -1,6 +1,6 @@
 {
   "name": "@iel/axios-ext-utils",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Utils of axios-ext.",
   "keywords": [
     "axios",
