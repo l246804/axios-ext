@@ -23,7 +23,7 @@
     "cs:update": "node ./scripts/changeset.mjs",
     "cs:version": "changeset version",
     "cs:tag": "changeset tag",
-    "prerelease": "pnpm build:r",
+    "prerelease": "pnpm build",
     "release": "changeset publish"
   },
   "devDependencies": {

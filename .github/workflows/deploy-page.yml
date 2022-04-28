@@ -1,0 +1,41 @@
+name: Build and Deploy page
+on:
+  push:
+    branches:
+      - master
+env:
+  CI: true
+  PNPM_CACHE_FOLDER: .pnpm-store
+jobs:
+  build-and-deploy:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: setup node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: install pnpm
+        run: npm i pnpm@latest -g
+      - name: Setup npmrc
+        run: echo "enable-pre-post-scripts=true" > .npmrc
+      - name: Log npmrc
+        run: cat .npmrc
+      - name: setup pnpm config
+        run: pnpm config set store-dir $PNPM_CACHE_FOLDER
+      - name: install dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: build sites
+        run: pnpm build:web
+      - name: deploy pages
+        uses: JamesIves/github-pages-deploy-action@4.3.3
+        with:
+          token: ${{ secrets.CI_TOKEN }}
+          branch: example-pages
+          folder: ./packages/axios-ext-example/dist
+
+
