@@ -29,6 +29,8 @@ jobs:
         run: pnpm config set store-dir $PNPM_CACHE_FOLDER
       - name: install dependencies
         run: pnpm install --no-frozen-lockfile
+      - name: build libs
+        run: pnpm build:lib
       - name: build sites
         run: pnpm build:web
       - name: deploy pages
