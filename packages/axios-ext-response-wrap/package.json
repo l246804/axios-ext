@@ -1,6 +1,6 @@
 {
   "name": "@iel/axios-ext-response-wrap",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Axios response result wrapper.",
   "keywords": [
     "axios",
@@ -36,12 +36,12 @@
   },
   "peerDependencies": {
     "axios": ">=0.26.1",
-    "@iel/axios-ext": "workspace:^1.0.4"
+    "@iel/axios-ext": "workspace:^1.0.5"
   },
   "devDependencies": {
-    "@iel/axios-ext": "workspace:^1.0.4"
+    "@iel/axios-ext": "workspace:^1.0.5"
   },
   "dependencies": {
-    "@iel/axios-ext-utils": "workspace:^1.0.4"
+    "@iel/axios-ext-utils": "workspace:^1.0.5"
   }
 }

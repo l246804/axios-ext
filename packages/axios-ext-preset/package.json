@@ -1,6 +1,6 @@
 {
   "name": "@iel/axios-ext-preset",
-  "version": "1.0.4",
+  "version": "2.0.0",
   "description": "Preset of AxiosExt.",
   "keywords": [
     "axios",
@@ -36,17 +36,17 @@
   },
   "peerDependencies": {
     "axios": ">=0.26.1",
-    "@iel/axios-ext": "workspace:^1.0.4"
+    "@iel/axios-ext": "workspace:^1.0.5"
   },
   "devDependencies": {
-    "@iel/axios-ext": "workspace:^1.0.4"
+    "@iel/axios-ext": "workspace:^1.0.5"
   },
   "dependencies": {
-    "@iel/axios-ext-cache": "workspace:^1.0.4",
-    "@iel/axios-ext-cancel-repeat": "workspace:^1.0.4",
-    "@iel/axios-ext-log": "workspace:^1.0.4",
-    "@iel/axios-ext-response-wrap": "workspace:^1.0.4",
-    "@iel/axios-ext-retry": "workspace:^1.0.4",
-    "@iel/axios-ext-utils": "workspace:^1.0.4"
+    "@iel/axios-ext-cache": "workspace:^1.0.5",
+    "@iel/axios-ext-cancel-repeat": "workspace:^1.1.0",
+    "@iel/axios-ext-log": "workspace:^1.0.5",
+    "@iel/axios-ext-response-wrap": "workspace:^1.0.5",
+    "@iel/axios-ext-retry": "workspace:^1.0.5",
+    "@iel/axios-ext-utils": "workspace:^1.0.5"
   }
 }
