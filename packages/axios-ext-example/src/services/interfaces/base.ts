@@ -12,6 +12,6 @@ export const notAllowRepeat = async () => http.notAllowRepeat().get(url)
 
 export const allowRepeat = async () => http.allowRepeat().get(url)
 
-export const responseWrap = async <T = any>() => http.allowRepeat().get<T>(url)
+export const responseWrap = async <T = any>() => http.get<T>(url)
 
 export const retry = async () => http.withRetry({ delay: 3e3, max: 2 }).get(url)

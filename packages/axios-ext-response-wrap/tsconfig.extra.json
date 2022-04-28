@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["./lib/adaptors/**/*.ts", "./lib/wrappers/**/*.ts"]
+}

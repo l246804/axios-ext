@@ -4,6 +4,5 @@
     "lib": ["ESNext"],
     "sourceMap": true,
     "useDefineForClassFields": true
-  },
-  "include": ["./packages/**/*.ts"]
+  }
 }

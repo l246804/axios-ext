@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import * as Base from './services/interfaces/base'
+import { http } from './services/http'
+
 /**
  * 格式化日期
  * @param {string | number | Date} value 指定日期
@@ -80,20 +82,24 @@ const responseWrap = async () => {
 const retry = () => {
   testApi(Base.retry)
 }
+const cancelPendingServices = () => {
+  http.CancelRepeat.clear()
+}
 </script>
 
 <template>
   <!-- eslint-disable vue/no-multiple-template-root -->
   <h3>使用 network 控制网速测试扩展功能</h3>
   <div>
-    <button @click="rawRequest()">rawRequest</button>
-    <button @click="request()">request</button>
-    <button @click="withCache(false)">withCache</button>
-    <button @click="withCache(true)">withCache(forceUpdate)</button>
-    <button @click="notAllowRepeat">notAllowRepeat</button>
-    <button @click="allowRepeat">allowRepeat</button>
-    <button @click="responseWrap">responseWrap</button>
-    <button @click="retry">retry</button>
+    <button @click="rawRequest()">原始请求</button>
+    <button @click="request()">request 请求</button>
+    <button @click="withCache(false)">缓存数据</button>
+    <button @click="withCache(true)">缓存数据(强制更新)</button>
+    <button @click="notAllowRepeat">不允许请求重复</button>
+    <button @click="allowRepeat">允许请求重复</button>
+    <button @click="cancelPendingServices">取消未完成请求</button>
+    <button @click="responseWrap">响应包装</button>
+    <button @click="retry">失败重连</button>
   </div>
   <div style="margin-top: 20px">
     <textarea style="width: 800px; height: 500px" :value="result"></textarea>

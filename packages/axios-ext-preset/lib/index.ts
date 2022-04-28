@@ -1,11 +1,10 @@
-import { AxiosExtInstance, createAxiosExt } from '@iel/axios-ext'
+import { AxiosExtInstance } from '@iel/axios-ext'
 import AxiosExtCache, { AxiosExtCacheOptions } from '@iel/axios-ext-cache'
 import AxiosExtCancelRepeat, { AxiosExtCancelRepeatOptions } from '@iel/axios-ext-cancel-repeat'
 import AxiosExtLog, { AxiosExtLogOptions } from '@iel/axios-ext-log'
 import AxiosExtResponseWrap, { AxiosExtResponseWrapOptions } from '@iel/axios-ext-response-wrap'
 import AxiosExtRetry, { AxiosExtRetryOptions } from '@iel/axios-ext-retry'
 import { assignSafely, omit } from '@iel/axios-ext-utils'
-import { AxiosInstance } from 'axios'
 
 type PresetOptions = {
   /**
@@ -30,12 +29,16 @@ const getPluginValidOptions = (options: any = {}, defaultOptions: any = {}) => {
 }
 
 /**
- * 预设 AxiosExt 插件功能
+ * 为 AxiosExt 实例预设插件功能
  */
-export default function useAxiosExtPreset(
-  instance: AxiosInstance,
+export default function usePresetForAxiosExt(
+  axiosExt: AxiosExtInstance,
   options: AxiosExtPresetOptions = {}
 ): AxiosExtInstance {
+  if (!axiosExt?._isAxiosExt) {
+    throw Error('[AxiosExtPreset] - The axiosExt of parameter must be an AxiosExt\'s instance.')
+  }
+
   const _options: Required<AxiosExtPresetOptions> = {
     Cache: getPluginValidOptions(options.Cache, {
       onError: (error: any) => console.error('[AxiosExtCache] - ', error)
@@ -56,8 +59,6 @@ export default function useAxiosExtPreset(
     }),
     Log: getPluginValidOptions(options.Log, { globalOnResponse: true })
   }
-
-  const axiosExt = createAxiosExt(instance)
 
   const usePlugin = (plugin: any, opts: any) => {
     if (!opts.preset) return

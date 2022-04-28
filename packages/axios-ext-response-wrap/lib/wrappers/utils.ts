@@ -24,16 +24,17 @@ export function getResponseErrorMsg(error: any) {
 
   if (!error) return UNKNOWN_ERROR
 
+  const response = getResponse(error)
+
   return (
-    getMsg(error) ||
+    getMsg(response) ||
+    getMsg(response?.data?.message) ||
+    getMsg(response?.data?.data) ||
+    getMsg(response?.data) ||
     getMsg(error?.message) ||
+    getMsg(response?.statusText) ||
+    getMsg(response?.status) ||
     getMsg(error?.code) ||
-    getMsg(getResponse(error)) ||
-    getMsg(getResponse(error)?.data) ||
-    getMsg(getResponse(error)?.data?.message) ||
-    getMsg(getResponse(error)?.data?.data) ||
-    getMsg(getResponse(error)?.statusText) ||
-    getMsg(getResponse(error)?.status) ||
     UNKNOWN_ERROR
   )
 }

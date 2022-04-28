@@ -60,6 +60,7 @@ export default function (plop: NodePlopAPI) {
       const pkgPath = resolvePackages(dirName, 'package.json')
       const readMePath = resolvePackages(dirName, 'README.md')
       const indexPath = resolvePackages(dirName, 'lib', 'index.ts')
+      const tsconfigPath = resolvePackages(dirName, 'tsconfig.json')
 
       const createAction = (path = '', templateFile = '') => ({
         type: 'add',
@@ -71,7 +72,8 @@ export default function (plop: NodePlopAPI) {
       return [
         createAction(pkgPath, resolveTemplates('plugins/package.json.hbs')),
         createAction(readMePath, resolveTemplates('plugins/README.md.hbs')),
-        createAction(indexPath, resolveTemplates('plugins/index.ts.hbs'))
+        createAction(indexPath, resolveTemplates('plugins/index.ts.hbs')),
+        createAction(tsconfigPath, resolveTemplates('plugins/tsconfig.json.hbs'))
       ]
     }
   })

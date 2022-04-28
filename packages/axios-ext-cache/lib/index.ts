@@ -130,10 +130,12 @@ const useStore = (baseOptions: AxiosExtCacheOptions) => {
 export type StoreManager = ReturnType<typeof useStoreManager>
 
 const useStoreManager = (store: ReturnType<typeof useStore>, axiosExt: AxiosExtInstance) => {
-  const get = async (configOrKey: AxiosExtCacheEntity['key'] | AxiosRequestConfig) => {
+  const get = async (
+    configOrKey: AxiosExtCacheEntity['key'] | AxiosRequestConfig
+  ): Promise<AxiosExtCacheEntity | null> => {
     const key = isString(configOrKey) ? configOrKey : getKeyByConfig(axiosExt.instance, configOrKey)
 
-    return store.getItem<AxiosExtCacheEntity>(key)
+    return store.getItem(key)
   }
 
   const set = async (entity: AxiosExtCacheEntity) => {
