@@ -14,6 +14,10 @@ export type ProxyAxiosMethodWithData = 'post' | 'put' | 'patch'
 const logPrefix = '[AxiosExt] - '
 
 class AxiosExt {
+  get _isAxiosExt() {
+    return true
+  }
+
   instance: AxiosInstance
   rawRequestFn: AxiosRequestFnType
   plugins: AxiosExtPluginManagerInstance

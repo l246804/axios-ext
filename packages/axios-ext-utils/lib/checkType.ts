@@ -3,7 +3,7 @@ export function toString(obj: any) {
 }
 
 export function isFunction(value: any): value is (...args: any) => any {
-  return value && typeof value === 'function'
+  return typeof value === 'function'
 }
 
 export function isString(value: any): value is string {
@@ -27,11 +27,19 @@ export function isArray(value: any): value is any[] {
 }
 
 export function isObject(value: any): value is object {
-  return value && typeof value === 'object'
+  return value !== null && typeof value === 'object'
 }
 
 export function isPlainObject(value: any): value is Record<string, any> {
-  return toString(value) === 'Object'
+  if (!isObject(value) || toString(value) !== 'Object') return false
+
+  const proto = Object.getPrototypeOf(Object(value))
+  if (proto === null) return true
+
+  const Ctor = Object.prototype.hasOwnProperty.call(proto, 'constructor') && proto.constructor
+  const funcToString = Function.prototype.toString
+
+  return isFunction(Ctor) && Ctor instanceof Ctor && funcToString.call(Ctor) === funcToString.call(Object)
 }
 
 export function isNull(value: any): value is null {

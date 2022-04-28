@@ -22,7 +22,7 @@ import {
   noop,
   Nullish
 } from '@iel/axios-ext-utils'
-import { AxiosInstance, AxiosRequestConfig } from 'axios'
+import Axios, { AxiosInstance, AxiosRequestConfig, CancelToken } from 'axios'
 
 declare module 'axios' {
   interface AxiosInstance {
@@ -51,6 +51,10 @@ export type AxiosExtCancelRepeatOptions = {
    */
   globalNotAllowRepeat?: boolean
   /**
+   * 手动取消接口时的错误信息
+   */
+  manualCancelMessage?: any
+  /**
    * 标识生成器，默认根据配置项常用属性生成唯一标识
    */
   keyGenerator?: (config: AxiosRequestConfig, args: AxiosExtCancelRepeatArgs) => string
@@ -72,6 +76,7 @@ export type AxiosExtCancelRepeatArgs = {
 export type AxiosExtPendingEntity = {
   key: string
   config: AxiosRequestConfig
+  cancel?: () => void
 }
 
 const getValidOptions = (options: AxiosExtCancelRepeatOptions = {}) => {
@@ -95,7 +100,7 @@ const useStore = () => new Map<string, AxiosExtPendingEntity>()
 export type StoreManager = ReturnType<typeof useStoreManager>
 
 const useStoreManager = (store: ReturnType<typeof useStore>, axiosExt: AxiosExtInstance) => {
-  const get = (configOrKey: AxiosExtCancelRepeatArgs['key'] | AxiosRequestConfig) => {
+  const get = (configOrKey: AxiosExtCancelRepeatArgs['key'] | AxiosRequestConfig): AxiosExtPendingEntity | null => {
     const key = isString(configOrKey) ? configOrKey : getKeyByConfig(axiosExt.instance, configOrKey)
 
     return store.get(key) ?? null
@@ -107,14 +112,21 @@ const useStoreManager = (store: ReturnType<typeof useStore>, axiosExt: AxiosExtI
     return store.set(entity.key, entity)
   }
 
-  const remove = (configOrKey: AxiosExtPendingEntity['key'] | AxiosRequestConfig) => {
-    const key = isString(configOrKey) ? configOrKey : getKeyByConfig(axiosExt.instance, configOrKey)
+  const remove = (configOrKey: AxiosExtPendingEntity['key'] | AxiosRequestConfig, syncCancel = true) => {
+    const entity = get(configOrKey)
 
-    return store.delete(key)
+    if (entity === null) return false
+
+    if (syncCancel) {
+      entity.cancel?.()
+    }
+
+    return store.delete(entity.key)
   }
 
   const removeBy = (
-    predicate: (entity: AxiosExtPendingEntity, key: AxiosExtPendingEntity['key'], interrupter: () => void) => boolean
+    predicate: (entity: AxiosExtPendingEntity, key: AxiosExtPendingEntity['key'], interrupter: () => void) => boolean,
+    syncCancel: boolean | ((entity: AxiosExtPendingEntity) => boolean) = true
   ) => {
     let needsDeleteEntities: AxiosExtPendingEntity['key'][] = []
 
@@ -133,11 +145,13 @@ const useStoreManager = (store: ReturnType<typeof useStore>, axiosExt: AxiosExtI
       }
     }
 
-    return needsDeleteEntities.map((key) => remove(key)).every(Boolean)
+    return needsDeleteEntities
+      .map((key) => remove(key, isFunction(syncCancel) ? syncCancel(get(key)!) : syncCancel))
+      .every(Boolean)
   }
 
   const clear = () => {
-    return store.clear()
+    removeBy(() => true)
   }
 
   const destroy = () => {
@@ -190,7 +204,7 @@ const AxiosExtCancelRepeatPlugin: AxiosExtPlugin<AxiosExtCancelRepeatOptions> = 
 
     if (isNullish(args)) return
 
-    storeManager.remove(args.key)
+    storeManager.remove(args.key, false)
   }
 
   instance.CancelRepeat = storeManager
@@ -222,6 +236,12 @@ const AxiosExtCancelRepeatPlugin: AxiosExtPlugin<AxiosExtCancelRepeatOptions> = 
       config
     }
     storeManager.set(entity)
+
+    if (!config.cancelToken) {
+      config.cancelToken = new Axios.CancelToken((cancel) => {
+        storeManager.get(entity.key)!.cancel = () => cancel(baseOptions.manualCancelMessage)
+      })
+    }
   })
 
   onResponse(cleanOnResponseFinally)

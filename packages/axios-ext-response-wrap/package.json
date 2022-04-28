@@ -28,7 +28,7 @@
     "url": "git+https://github.com/iel-h/axios-ext.git"
   },
   "scripts": {
-    "build": "node ./scripts/build.mjs",
+    "build:dts": "tsc -p ./tsconfig.lib.json && tsc -p ./tsconfig.extra.json",
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
   "bugs": {

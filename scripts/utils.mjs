@@ -2,7 +2,6 @@ import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs-extra'
 import { buildSync } from 'esbuild'
-import * as execa from 'execa'
 
 export const getDirname = (url = '') => dirname(fileURLToPath(url))
 
@@ -63,25 +62,4 @@ export const buildPkg = (options = {}) => {
     minify: true,
     ...buildOptions
   })
-}
-
-export const resolveTscCmd = (input = '', output = '') => {
-  if (!input) return
-
-  return `\
-tsc ${input} \
---outFile ${output} \
---target esnext \
---module esnext \
---moduleResolution node \
---declaration \
---emitDeclarationOnly \
---esModuleInterop
-`
-}
-
-export const buildDts = (input = '', output = '') => {
-  if (!input) return
-
-  execa.execaCommandSync(resolveTscCmd(input, output), { stdio: 'inherit' })
 }

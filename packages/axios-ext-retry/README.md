@@ -2,23 +2,25 @@
 
 > 为 `Axios` 扩展失败重连功能。
 
-## Install
+## 安装
 
 ```bash
 # 依赖 @iel/axios-ext
 npm i @iel/axios-ext @iel/axios-ext-retry -S
 ```
 
-## Usage
+## 用法
 
 ```js
-import { createAxiosExt } from '@iel/axiosExt'
+import { createAxios } from '@iel/axios-ext'
 import AxiosExtRetryPlugin from '@iel/axios-ext-retry'
 import axios from 'axios'
 
-const axiosExt = createAxiosExt(axios).use(AxiosExtRetryPlugin)
+const http = createAxios(axios)
 
-axios
+http.$axiosExt.use(AxiosExtRetryPlugin)
+
+http
   .withRetry({ max: 3 })
   .get('/demo/list')
   .then((res) => {
