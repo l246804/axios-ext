@@ -39,5 +39,3 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
           branch: example-pages
           folder: ./packages/axios-ext-example/dist
-
-
