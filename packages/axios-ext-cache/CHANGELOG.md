@@ -1,5 +1,11 @@
 # @iel/axios-ext-cache
 
+## 1.0.6
+
+### Patch Changes
+
+- db52afc: fix: 修复缓存配置项报错
+
 ## 1.0.5
 
 ### Patch Changes

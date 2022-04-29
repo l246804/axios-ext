@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@iel/axios-ext": "workspace:^1.0.5",
-    "@iel/axios-ext-cache": "workspace:^1.0.5",
+    "@iel/axios-ext-cache": "workspace:^1.0.6",
     "@iel/axios-ext-cancel-repeat": "workspace:^1.1.0",
     "@iel/axios-ext-log": "workspace:^1.0.5",
     "@iel/axios-ext-preset": "workspace:^2.0.0",
