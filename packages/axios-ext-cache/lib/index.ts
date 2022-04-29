@@ -305,7 +305,7 @@ const AxiosExtCachePlugin: AxiosExtPlugin<AxiosExtCacheOptions> = function (axio
       key: eventStore.key,
       now: getNow(),
       expire: eventStore.expire,
-      data: { response: _response, config, args: eventStore }
+      data: { response: _response, config: _response.config, args: eventStore }
     }
     storeManager.set(entity).catch(baseOptions.onError)
   })
