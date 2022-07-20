@@ -50,14 +50,14 @@ class AxiosExt {
     const methodNoData: ProxyAxiosMethodNoData[] = ['delete', 'get', 'head', 'options']
     const methodWithData: ProxyAxiosMethodWithData[] = ['post', 'put', 'patch']
 
-    methodNoData.forEach((method) => (instance[method] = this.proxyRequest(false)))
-    methodWithData.forEach((method) => (instance[method] = this.proxyRequest(true)))
+    methodNoData.forEach((method) => (instance[method] = this.proxyRequest(method, false)))
+    methodWithData.forEach((method) => (instance[method] = this.proxyRequest(method, true)))
 
     // 劫持 request 请求
-    instance.request = this.proxyRequest(false)
+    instance.request = this.proxyRequest('get', false)
   }
 
-  private proxyRequest(withData = false): any {
+  private proxyRequest(method: ProxyAxiosMethodNoData | ProxyAxiosMethodWithData, withData = false): any {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const axiosExt = this
 
@@ -69,12 +69,12 @@ class AxiosExt {
       let [configOrUrl, configOrData, config] = Array.from(arguments)
 
       if (withData) {
-        config = assignSafely(config, { url: configOrUrl, data: configOrData })
+        config = assignSafely({ method }, config, { url: configOrUrl, data: configOrData })
       } else {
         if (isString(configOrUrl || '')) {
-          config = assignSafely(config, { url: configOrUrl })
+          config = assignSafely({ method }, config, { url: configOrUrl })
         } else {
-          config = assignSafely(config, configOrUrl)
+          config = assignSafely({ method }, config, configOrUrl)
         }
       }
 
